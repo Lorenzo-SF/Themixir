@@ -1,0 +1,17 @@
+ # OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# VS Code / IDE
+.vscode/
+*.vsix
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class

@@ -1,0 +1,173 @@
+{
+  "name": "themixir-themes",
+  "displayName": "Themixir! Elixir Themes for VS Code (and Cursor, and Antigravity, and all the folks)",
+  "description": "A collection of 30 vibrant themes based on custom color palettes.",
+  "version": "1.0.1",
+  "publisher": "Lorenzo-SF",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lorenzo-sf/themixir"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "icon": "themixir_icon.png",
+  "engines": {
+    "vscode": "^1.50.0"
+  },
+  "categories": [
+    "Themes"
+  ],
+  "contributes": {
+    "themes": [
+      {
+        "label": "Themixir Red Light",
+        "uiTheme": "vs",
+        "path": "./themes/red_light.json"
+      },
+      {
+        "label": "Themixir Red Dark",
+        "uiTheme": "vs-dupoark",
+        "path": "./themes/red_dark.json"
+      },
+      {
+        "label": "Themixir Red Deep",
+        "uiTheme": "vs-dupoark",
+        "path": "./themes/red_deep.json"
+      },
+      {
+        "label": "Themixir Green Light",
+        "uiTheme": "vs",
+        "path": "./themes/green_light.json"
+      },
+      {
+        "label": "Themixir Green Dark",
+        "uiTheme": "vs-dupoark",
+        "path": "./themes/green_dark.json"
+      },
+      {
+        "label": "Themixir Green Deep",
+        "uiTheme": "vs-dupoark",
+        "path": "./themes/green_deep.json"
+      },
+      {
+        "label": "Themixir Blue Light",
+        "uiTheme": "vs",
+        "path": "./themes/blue_light.json"
+      },
+      {
+        "label": "Themixir Blue Dark",
+        "uiTheme": "vs-dupoark",
+        "path": "./themes/blue_dark.json"
+      },
+      {
+        "label": "Themixir Blue Deep",
+        "uiTheme": "vs-dupoark",
+        "path": "./themes/blue_deep.json"
+      },
+      {
+        "label": "Themixir Purple Light",
+        "uiTheme": "vs",
+        "path": "./themes/purple_light.json"
+      },
+      {
+        "label": "Themixir Purple Dark",
+        "uiTheme": "vs-dupoark",
+        "path": "./themes/purple_dark.json"
+      },
+      {
+        "label": "Themixir Purple Deep",
+        "uiTheme": "vs-dupoark",
+        "path": "./themes/purple_deep.json"
+      },
+      {
+        "label": "Themixir Orange Light",
+        "uiTheme": "vs",
+        "path": "./themes/orange_light.json"
+      },
+      {
+        "label": "Themixir Orange Dark",
+        "uiTheme": "vs-dupoark",
+        "path": "./themes/orange_dark.json"
+      },
+      {
+        "label": "Themixir Orange Deep",
+        "uiTheme": "vs-dupoark",
+        "path": "./themes/orange_deep.json"
+      },
+      {
+        "label": "Themixir Light Blue Light",
+        "uiTheme": "vs",
+        "path": "./themes/light_blue_light.json"
+      },
+      {
+        "label": "Themixir Light Blue Dark",
+        "uiTheme": "vs-dupoark",
+        "path": "./themes/light_blue_dark.json"
+      },
+      {
+        "label": "Themixir Light Blue Deep",
+        "uiTheme": "vs-dupoark",
+        "path": "./themes/light_blue_deep.json"
+      },
+      {
+        "label": "Themixir Gold Light",
+        "uiTheme": "vs",
+        "path": "./themes/gold_light.json"
+      },
+      {
+        "label": "Themixir Gold Dark",
+        "uiTheme": "vs-dupoark",
+        "path": "./themes/gold_dark.json"
+      },
+      {
+        "label": "Themixir Gold Deep",
+        "uiTheme": "vs-dupoark",
+        "path": "./themes/gold_deep.json"
+      },
+      {
+        "label": "Themixir Silver Light",
+        "uiTheme": "vs",
+        "path": "./themes/silver_light.json"
+      },
+      {
+        "label": "Themixir Silver Dark",
+        "uiTheme": "vs-dupoark",
+        "path": "./themes/silver_dark.json"
+      },
+      {
+        "label": "Themixir Silver Deep",
+        "uiTheme": "vs-dupoark",
+        "path": "./themes/silver_deep.json"
+      },
+      {
+        "label": "Themixir Copper Light",
+        "uiTheme": "vs",
+        "path": "./themes/copper_light.json"
+      },
+      {
+        "label": "Themixir Copper Dark",
+        "uiTheme": "vs-dupoark",
+        "path": "./themes/copper_dark.json"
+      },
+      {
+        "label": "Themixir Copper Deep",
+        "uiTheme": "vs-dupoark",
+        "path": "./themes/copper_deep.json"
+      },
+      {
+        "label": "Themixir Magenta Light",
+        "uiTheme": "vs",
+        "path": "./themes/magenta_light.json"
+      },
+      {
+        "label": "Themixir Magenta Dark",
+        "uiTheme": "vs-dupoark",
+        "path": "./themes/magenta_dark.json"
+      },
+      {
+        "label": "Themixir Magenta Deep",
+        "uiTheme": "vs-dupoark",
+        "path": "./themes/magenta_deep.json"
+      }
+    ]
+  }
+}

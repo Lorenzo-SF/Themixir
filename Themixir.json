@@ -1,0 +1,192 @@
+{
+  "Themixir Red": {
+    "file": "themixir_red.png",
+    "themixir_red_dark": {
+      "background": "#120A0A",
+      "foreground": "#E0D6D6",
+      "selection": "#C0392B",
+      "comments": "#8A6E6E",
+      "strings": "#FFD166",
+      "keywords": "#FF6B35"
+    },
+    "themixir_red_light": {
+      "background": "#F8F0F0",
+      "foreground": "#332222",
+      "selection": "#A62B2B",
+      "comments": "#B59A9A",
+      "strings": "#D4A017",
+      "keywords": "#E55A2D"
+    }
+  },
+  "Themixir Green": {
+    "file": "themixir_green.png",
+    "themixir_green_dark": {
+      "background": "#0D140D",
+      "foreground": "#E1E8E1",
+      "selection": "#88B04B",
+      "comments": "#64755E",
+      "strings": "#D4E157",
+      "keywords": "#93C572"
+    },
+    "themixir_green_light": {
+      "background": "#F1F8E9",
+      "foreground": "#2E3D24",
+      "selection": "#8BC34A",
+      "comments": "#9EAD94",
+      "strings": "#AFB42B",
+      "keywords": "#558B2F"
+    }
+  },
+  "Themixir Blue": {
+    "file": "themixir_blue.png",
+    "themixir_blue_dark": {
+      "background": "#0A0A12",
+      "foreground": "#D6D6E0",
+      "selection": "#06B6D4",
+      "comments": "#6E6E8A",
+      "strings": "#93C5FD",
+      "keywords": "#3B82F6"
+    },
+    "themixir_blue_light": {
+      "background": "#F0F0F8",
+      "foreground": "#222233",
+      "selection": "#059AC1",
+      "comments": "#9AB5D5",
+      "strings": "#73A8E2",
+      "keywords": "#2D67C1"
+    }
+  },
+  "Themixir Purple": {
+    "file": "themixir_purple.png",
+    "themixir_purple_dark": {
+      "background": "#120A12",
+      "foreground": "#D6D0D6",
+      "selection": "#8B5CF6",
+      "comments": "#8A6E8A",
+      "strings": "#F43F5E",
+      "keywords": "#A78BFA"
+    },
+    "themixir_purple_light": {
+      "background": "#F0E6F0",
+      "foreground": "#332233",
+      "selection": "#7547D6",
+      "comments": "#B59AB5",
+      "strings": "#E22D4E",
+      "keywords": "#9471D5"
+    }
+  },
+  "Themixir Orange": {
+    "file": "themixir_orange.png",
+    "themixir_orange_dark": {
+      "background": "#120A00",
+      "foreground": "#E0D6C8",
+      "selection": "#FF9800",
+      "comments": "#8A6E5A",
+      "strings": "#0EA5E9",
+      "keywords": "#FF9800"
+    },
+    "themixir_orange_light": {
+      "background": "#FFF0E6",
+      "foreground": "#33221A",
+      "selection": "#F57C00",
+      "comments": "#B59A8A",
+      "strings": "#0C8FD1",
+      "keywords": "#F57C00"
+    }
+  },
+  "Themixir Light Blue": {
+    "file": "themixir_light_blue.png",
+    "themixir_light_blue_dark": {
+      "background": "#0A0D12",
+      "foreground": "#D6D6E0",
+      "selection": "#81D4FA",
+      "comments": "#4A6B8A",
+      "strings": "#63B3ED",
+      "keywords": "#1E56A0"
+    },
+    "themixir_light_blue_light": {
+      "background": "#F0F5F8",
+      "foreground": "#1A2B3A",
+      "selection": "#5A9EC3",
+      "comments": "#7A9AB5",
+      "strings": "#3A86C3",
+      "keywords": "#0D3A6A"
+    }
+  },
+  "Themixir Gold": {
+    "file": "themixir_gold.png",
+    "themixir_gold_dark": {
+      "background": "#0A0A05",
+      "foreground": "#E0D6C8",
+      "selection": "#FFD700",
+      "comments": "#8A6E5A",
+      "strings": "#00B8D4",
+      "keywords": "#FFD700"
+    },
+    "themixir_gold_light": {
+      "background": "#FFF0E6",
+      "foreground": "#33221A",
+      "selection": "#D4AF37",
+      "comments": "#B59A8A",
+      "strings": "#008E9B",
+      "keywords": "#D4AF37"
+    }
+  },
+  "Themixir Silver": {
+    "file": "themixir_silver.png",
+    "themixir_silver_dark": {
+      "background": "#121212",
+      "foreground": "#E0E0E0",
+      "selection": "#A9A9A9",
+      "comments": "#87CEFA",
+      "strings": "#98FB98",
+      "keywords": "#FF4500"
+    },
+    "themixir_silver_light": {
+      "background": "#F0F0F0",
+      "foreground": "#333333",
+      "selection": "#808080",
+      "comments": "#6495ED",
+      "strings": "#32CD32",
+      "keywords": "#FF0000"
+    }
+  },
+  "Themixir Copper": {
+    "file": "themixir_copper.png",
+    "themixir_copper_dark": {
+      "background": "#0A0500",
+      "foreground": "#E0D6C8",
+      "selection": "#B87333",
+      "comments": "#8A6E5A",
+      "strings": "#00B8D4",
+      "keywords": "#A52A2A"
+    },
+    "themixir_copper_light": {
+      "background": "#FFF0E6",
+      "foreground": "#33221A",
+      "selection": "#8B4513",
+      "comments": "#B59A8A",
+      "strings": "#008E9B",
+      "keywords": "#8B0000"
+    }
+  },
+  "Themixir Magenta": {
+    "file": "themixir_magenta.png",
+    "themixir_magenta_dark": {
+      "background": "#120A12",
+      "foreground": "#D6D0D6",
+      "selection": "#FF0090",
+      "comments": "#8A6E8A",
+      "strings": "#F43F5E",
+      "keywords": "#FF0090"
+    },
+    "themixir_magenta_light": {
+      "background": "#F0E6F0",
+      "foreground": "#332233",
+      "selection": "#C2006B",
+      "comments": "#B59AB5",
+      "strings": "#E22D4E",
+      "keywords": "#C2006B"
+    }
+  }
+}

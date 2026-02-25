@@ -1,0 +1,84 @@
+{
+  "name": "Themixir Red Deep",
+  "type": "dark",
+  "colors": {
+    "editor.background": "#260B09",
+    "editor.foreground": "#ECC4BF",
+    "editor.selectionBackground": "#C0392B80",
+    "editor.lineHighlightBackground": "#220A08",
+    "editorCursor.foreground": "#C0392B",
+    "editorWhitespace.foreground": "#9A2E2240",
+    "editorIndentGuide.background": "#9A2E2220",
+    "editorIndentGuide.activeBackground": "#C0392B60",
+    "activityBar.background": "#260B09",
+    "activityBar.foreground": "#ECC4BF",
+    "activityBar.inactiveForeground": "#ECC4BF60",
+    "activityBarBadge.background": "#C0392B",
+    "activityBarBadge.foreground": "#260B09",
+    "sideBar.background": "#220A08",
+    "sideBar.foreground": "#ECC4BF",
+    "sideBarSectionHeader.background": "#260B09",
+    "statusBar.background": "#C0392B",
+    "statusBar.foreground": "#260B09",
+    "statusBar.noFolderBackground": "#C0392B",
+    "titleBar.activeBackground": "#260B09",
+    "titleBar.activeForeground": "#ECC4BF",
+    "tab.activeBackground": "#260B09",
+    "tab.activeForeground": "#ECC4BF",
+    "tab.inactiveBackground": "#220A08",
+    "tab.inactiveForeground": "#ECC4BF80",
+    "terminal.background": "#260B09",
+    "terminal.foreground": "#ECC4BF"
+  },
+  "tokenColors": [
+    {
+      "scope": "comment",
+      "settings": {
+        "foreground": "#9A2E22"
+      }
+    },
+    {
+      "scope": "string",
+      "settings": {
+        "foreground": "#C0392B"
+      }
+    },
+    {
+      "scope": "constant.numeric",
+      "settings": {
+        "foreground": "#C0392B"
+      }
+    },
+    {
+      "scope": "keyword",
+      "settings": {
+        "foreground": "#C0392B",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "scope": "storage",
+      "settings": {
+        "foreground": "#C0392B"
+      }
+    },
+    {
+      "scope": "entity.name.function",
+      "settings": {
+        "foreground": "#C0392B"
+      }
+    },
+    {
+      "scope": "variable",
+      "settings": {
+        "foreground": "#ECC4BF"
+      }
+    },
+    {
+      "scope": "punctuation",
+      "settings": {
+        "foreground": "#ECC4BFB0"
+      }
+    }
+  ]
+}
