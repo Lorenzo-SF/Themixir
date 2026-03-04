@@ -40,13 +40,26 @@
     {
       "scope": "string",
       "settings": {
-        "foreground": "#C2006B"
+        "foreground": "#C2000A"
+      }
+    },
+    {
+      "scope": "string.regexp",
+      "settings": {
+        "foreground": "#006BC2"
       }
     },
     {
       "scope": "constant.numeric",
       "settings": {
-        "foreground": "#C2006B"
+        "foreground": "#00C257"
+      }
+    },
+    {
+      "scope": "constant.language",
+      "settings": {
+        "foreground": "#00C257",
+        "fontStyle": "italic"
       }
     },
     {
@@ -63,15 +76,48 @@
       }
     },
     {
+      "scope": "storage.type",
+      "settings": {
+        "foreground": "#00C257",
+        "fontStyle": "italic"
+      }
+    },
+    {
       "scope": "entity.name.function",
       "settings": {
-        "foreground": "#C2006B"
+        "foreground": "#6BC200"
+      }
+    },
+    {
+      "scope": "entity.name.class",
+      "settings": {
+        "foreground": "#C2B800",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "scope": "entity.name.type",
+      "settings": {
+        "foreground": "#00C257"
       }
     },
     {
       "scope": "variable",
       "settings": {
         "foreground": "#270015"
+      }
+    },
+    {
+      "scope": "variable.parameter",
+      "settings": {
+        "foreground": "#B800C2",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "scope": "variable.other.property",
+      "settings": {
+        "foreground": "#0AC200"
       }
     },
     {

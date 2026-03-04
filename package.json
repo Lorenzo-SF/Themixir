@@ -2,7 +2,7 @@
   "name": "themixir-themes",
   "displayName": "Themixir! Elixir Themes for VS Code (and Cursor, and Antigravity, and all the folks)",
   "description": "A collection of 30 vibrant themes based on custom color palettes.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "publisher": "Lorenzo-SF",
   "repository": {
     "type": "git",
@@ -25,12 +25,12 @@
       },
       {
         "label": "Themixir Red Dark",
-        "uiTheme": "vs-dupoark",
+        "uiTheme": "vs-dark",
         "path": "./themes/red_dark.json"
       },
       {
         "label": "Themixir Red Deep",
-        "uiTheme": "vs-dupoark",
+        "uiTheme": "vs-dark",
         "path": "./themes/red_deep.json"
       },
       {
@@ -40,12 +40,12 @@
       },
       {
         "label": "Themixir Green Dark",
-        "uiTheme": "vs-dupoark",
+        "uiTheme": "vs-dark",
         "path": "./themes/green_dark.json"
       },
       {
         "label": "Themixir Green Deep",
-        "uiTheme": "vs-dupoark",
+        "uiTheme": "vs-dark",
         "path": "./themes/green_deep.json"
       },
       {
@@ -55,12 +55,12 @@
       },
       {
         "label": "Themixir Blue Dark",
-        "uiTheme": "vs-dupoark",
+        "uiTheme": "vs-dark",
         "path": "./themes/blue_dark.json"
       },
       {
         "label": "Themixir Blue Deep",
-        "uiTheme": "vs-dupoark",
+        "uiTheme": "vs-dark",
         "path": "./themes/blue_deep.json"
       },
       {
@@ -70,12 +70,12 @@
       },
       {
         "label": "Themixir Purple Dark",
-        "uiTheme": "vs-dupoark",
+        "uiTheme": "vs-dark",
         "path": "./themes/purple_dark.json"
       },
       {
         "label": "Themixir Purple Deep",
-        "uiTheme": "vs-dupoark",
+        "uiTheme": "vs-dark",
         "path": "./themes/purple_deep.json"
       },
       {
@@ -85,12 +85,12 @@
       },
       {
         "label": "Themixir Orange Dark",
-        "uiTheme": "vs-dupoark",
+        "uiTheme": "vs-dark",
         "path": "./themes/orange_dark.json"
       },
       {
         "label": "Themixir Orange Deep",
-        "uiTheme": "vs-dupoark",
+        "uiTheme": "vs-dark",
         "path": "./themes/orange_deep.json"
       },
       {
@@ -100,12 +100,12 @@
       },
       {
         "label": "Themixir Light Blue Dark",
-        "uiTheme": "vs-dupoark",
+        "uiTheme": "vs-dark",
         "path": "./themes/light_blue_dark.json"
       },
       {
         "label": "Themixir Light Blue Deep",
-        "uiTheme": "vs-dupoark",
+        "uiTheme": "vs-dark",
         "path": "./themes/light_blue_deep.json"
       },
       {
@@ -115,12 +115,12 @@
       },
       {
         "label": "Themixir Gold Dark",
-        "uiTheme": "vs-dupoark",
+        "uiTheme": "vs-dark",
         "path": "./themes/gold_dark.json"
       },
       {
         "label": "Themixir Gold Deep",
-        "uiTheme": "vs-dupoark",
+        "uiTheme": "vs-dark",
         "path": "./themes/gold_deep.json"
       },
       {
@@ -130,12 +130,12 @@
       },
       {
         "label": "Themixir Silver Dark",
-        "uiTheme": "vs-dupoark",
+        "uiTheme": "vs-dark",
         "path": "./themes/silver_dark.json"
       },
       {
         "label": "Themixir Silver Deep",
-        "uiTheme": "vs-dupoark",
+        "uiTheme": "vs-dark",
         "path": "./themes/silver_deep.json"
       },
       {
@@ -145,12 +145,12 @@
       },
       {
         "label": "Themixir Copper Dark",
-        "uiTheme": "vs-dupoark",
+        "uiTheme": "vs-dark",
         "path": "./themes/copper_dark.json"
       },
       {
         "label": "Themixir Copper Deep",
-        "uiTheme": "vs-dupoark",
+        "uiTheme": "vs-dark",
         "path": "./themes/copper_deep.json"
       },
       {
@@ -160,12 +160,12 @@
       },
       {
         "label": "Themixir Magenta Dark",
-        "uiTheme": "vs-dupoark",
+        "uiTheme": "vs-dark",
         "path": "./themes/magenta_dark.json"
       },
       {
         "label": "Themixir Magenta Deep",
-        "uiTheme": "vs-dupoark",
+        "uiTheme": "vs-dark",
         "path": "./themes/magenta_deep.json"
       }
     ]

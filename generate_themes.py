@@ -1,20 +1,21 @@
 import json
 import os
-
 import subprocess
+import re
+import concurrent.futures
 
 ALAJA_PATH = "/home/lorenzosnchez/proyectos/alaja/alaja"
 
 def _call_alaja(hex_color, mode, amount):
     # Map amount [0, 1] to [1, 10]
     alaja_amount = max(1, min(10, round(amount * 10)))
-    cmd = [ALAJA_PATH, "--color", hex_color, f"--{mode}", str(alaja_amount), "--quiet"]
+    cmd = [ALAJA_PATH, "--color", hex_color, f"--{mode}", str(alaja_amount), "--raw"]
     
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode == 0:
         try:
             data = json.loads(result.stdout)
-            return data["original"]["hex"]
+            return data["base"]["hex"]
         except json.JSONDecodeError:
             print(f"Failed to parse Alaja output: {result.stdout}")
     else:
@@ -23,37 +24,48 @@ def _call_alaja(hex_color, mode, amount):
     return hex_color
 
 def get_harmony(hex_color, harmony_type):
-    cmd = [ALAJA_PATH, "--color", hex_color, "--harmony", harmony_type, "--quiet"]
+    cmd = [ALAJA_PATH, "--harmony", harmony_type, "--color", hex_color, "--raw"]
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode == 0:
         try:
-            return [c["hex"] for c in json.loads(result.stdout).get("harmonies", {}).get("colors", [])]
+            data = json.loads(result.stdout)
+            return [c["hex"] for c in data.get("harmonies", {}).get("colors", [])]
         except json.JSONDecodeError:
             pass
     return []
 
 def darken(hex_color, amount=0.2):
-    return _call_alaja(hex_color, "darker", amount)
+    return _call_alaja(hex_color, "darken", amount)
 
 def lighten(hex_color, amount=0.2):
-    return _call_alaja(hex_color, "lighter", amount)
+    return _call_alaja(hex_color, "lighten", amount)
 
 def generate_theme(name, base_colors, variant_type, display_name):
     # The user requested to base the themes entirely on the "selection" field
     base_hex = base_colors['selection']
     
-    # Calculate harmonies dynamically using Alaja
+    # Calculate harmonies dynamically using Alaja (now works correctly using regex parsing)
     analogous = get_harmony(base_hex, "analogous")
     triad = get_harmony(base_hex, "triad")
     complementary = get_harmony(base_hex, "complementary")
+    split = get_harmony(base_hex, "split_complementary")
+    square = get_harmony(base_hex, "square")
 
     sel = base_hex
     key = base_hex  # Make keywords and primary accent match the actual hue
     
-    # Meaningful harmonic pairings for code tokens
-    str_col = analogous[1] if len(analogous) > 1 else base_hex
-    func_col = triad[1] if len(triad) > 1 else base_hex
-    num_col = complementary[1] if len(complementary) > 1 else base_hex
+    def safe_get(colors_list, index, fallback):
+        return colors_list[index] if len(colors_list) > index else fallback
+
+    # Meaningful harmonic pairings for code tokens to create variety
+    str_col = safe_get(analogous, 1, base_hex)
+    func_col = safe_get(triad, 1, base_hex)
+    num_col = safe_get(complementary, 1, safe_get(split, 1, base_hex))
+    class_col = safe_get(square, 1, func_col)
+    type_col = safe_get(square, 2, class_col)
+    param_col = safe_get(analogous, 2, str_col)
+    prop_col = safe_get(split, 2, base_hex)
+    regex_col = safe_get(triad, 2, str_col)
 
     if variant_type == 'light':
         type_str = "light"
@@ -119,11 +131,18 @@ def generate_theme(name, base_colors, variant_type, display_name):
         "tokenColors": [
             { "scope": "comment", "settings": { "foreground": com } },
             { "scope": "string", "settings": { "foreground": str_col } },
+            { "scope": "string.regexp", "settings": { "foreground": regex_col } },
             { "scope": "constant.numeric", "settings": { "foreground": num_col } },
+            { "scope": "constant.language", "settings": { "foreground": num_col, "fontStyle": "italic" } },
             { "scope": "keyword", "settings": { "foreground": key, "fontStyle": "bold" } },
             { "scope": "storage", "settings": { "foreground": key } },
+            { "scope": "storage.type", "settings": { "foreground": type_col, "fontStyle": "italic" } },
             { "scope": "entity.name.function", "settings": { "foreground": func_col } },
+            { "scope": "entity.name.class", "settings": { "foreground": class_col, "fontStyle": "bold" } },
+            { "scope": "entity.name.type", "settings": { "foreground": type_col } },
             { "scope": "variable", "settings": { "foreground": fg } },
+            { "scope": "variable.parameter", "settings": { "foreground": param_col, "fontStyle": "italic" } },
+            { "scope": "variable.other.property", "settings": { "foreground": prop_col } },
             { "scope": "punctuation", "settings": { "foreground": fg + "B0" } }
         ]
     }
@@ -144,9 +163,8 @@ def main():
     with open(input_file, 'r') as f:
         data = json.load(f)
 
-    manifest_themes = []
-
-    for color_name, content in data.items():
+    def make_themes_for_color(item):
+        color_name, content = item
         # Themixir Red -> Red
         pure_name = color_name.replace("Themixir ", "")
         safe_name = pure_name.lower().replace(" ", "_")
@@ -161,6 +179,7 @@ def main():
             ('deep', dark_key, f"Themixir {pure_name} Deep") # Deep uses Dark settings as base
         ]
 
+        themes_added = []
         for v_type, v_key, display in variants:
             if v_key in content:
                 base = content[v_key]
@@ -172,18 +191,25 @@ def main():
                 with open(filepath, 'w') as tf:
                     json.dump(theme_json, tf, indent=2)
                 
-                manifest_themes.append({
+                themes_added.append({
                     "label": display,
-                    "uiTheme": "vs" if v_type == 'light' else "vs-dupoark",
+                    "uiTheme": "vs" if v_type == 'light' else "vs-dark",
                     "path": f"./themes/{filename}"
                 })
+        return themes_added
+
+    manifest_themes = []
+    
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+        for result in executor.map(make_themes_for_color, data.items()):
+            manifest_themes.extend(result)
 
     # Update package.json
     pkg = {
         "name": "themixir-themes",
         "displayName": "Themixir! Elixir Themes for VS Code (and Cursor, and Antigravity, and all the folks)",
         "description": "A collection of 30 vibrant themes based on custom color palettes.",
-        "version": "1.0.1,
+        "version": "1.0.2",
         "publisher": "Lorenzo-SF",
         "repository": {
             "type": "git",
