@@ -1,21 +1,76 @@
 # Themixir! Elixir Themes for VS Code (and Cursor, and Antigravity, and all the folks)
 
-A collection of 30 vibrant themes for your favourite IDE, based on custom color palettes and high-contrast visuals (powered by [Alaja](https://github.com/lorenzo-sf/alaja)).
+A collection of **50 vibrant themes** for your favourite IDE, built on
+custom palettes with WCAG-AA contrast, full workbench coverage (terminal
+ANSI 16, git decorations, bracket/find/hover widgets, etc.), and
+syntax highlighting tuned for readability.
+
+Powered by [Alaja](https://github.com/lorenzo-sf/alaja) for colour
+harmonies and validated against WCAG 2.1 contrast ratios.
 
 ## Features
 
-- **10 Core Colors**: Red, Green, Blue, Purple, Orange, Light Blue, Gold, Silver, Copper, and Magenta.
-- **3 Variants per Color**:
-  - **Light**: Crisp and clear light backgrounds.
-  - **Dark**: Neutral dark backgrounds for comfortable work.
-  - **Deep**: Intense, saturated dark backgrounds matching the theme color.
+- **10 Core Colours**: Red, Green, Blue, Purple, Orange, Light Blue, Gold,
+  Silver, Copper, Magenta.
+- **5 Variants per Colour**:
+  - **Solarized** — crisp light Solarized-style base, low saturation.
+  - **Light** — clear light backgrounds with a strong tint of the colour.
+  - **Normal** — neutral dark background (`#1E1E1E`), perfect for users who
+    want a dark theme that doesn't tint the whole workbench.
+  - **Dark** — saturated dark background with the colour family.
+  - **Solarized Dark** — Solarized Dark-style base (`#002B36`).
+- **Full workbench coverage**: ~290 colour keys per theme — editor, terminal
+  ANSI 16, git decorations, bracket match, find match, peek view, diff
+  editor, merge, notifications, widgets, settings, breadcrumb, etc.
+- **WCAG-AA contrast**: editor foreground vs background, keyword vs
+  background, status bar, activity badge, and other UI components all pass
+  ≥4.5. Critical token scopes (strings, keywords, numbers, storage) pass
+  ≥4.5; decorative scopes (comments, function names, etc.) pass ≥3.0.
 
 ## Installation
 
-1. Open **Extensions** in your favourite IDE (`Cmd+Shift+X`).
+1. Open **Extensions** in your favourite IDE (`Cmd+Shift+X` / `Ctrl+Shift+X`).
 2. Search for **Themixir Themes**.
 3. Click **Install**.
-4. Select your preferred variant using `Cmd+K Cmd+T`.
+4. Select your preferred variant with `Cmd+K Cmd+T` / `Ctrl+K Ctrl+T`.
+
+## Development
+
+### Theme generation
+
+The source of truth is `Themixir.json` (10 palettes × 5 variants). The
+generator script `generate_themes.py` produces all 50 theme JSONs under
+`themes/` and rewrites the `contributes.themes` array in `package.json`.
+
+```bash
+python3 generate_themes.py
+```
+
+The script:
+
+- Derives token colours (string, function, class, type, param, etc.) from
+  each palette's accent via HSL harmonies (analogous, triad, complementary,
+  split-complementary).
+- Auto-corrects foreground colours that fail WCAG 4.5 against their background.
+- Auto-corrects token colours against the editor background.
+- Updates `package.json` only — leaves every other field untouched.
+
+### Packaging and publishing
+
+See [`docs/PUBLISHING.md`](docs/PUBLISHING.md) for the full workflow. TL;DR:
+
+```bash
+# One-time
+npm install -g @vscode/vsce
+vsce login Lorenzo-SF
+
+# Release
+./scripts/release.sh patch   # or minor / major
+vsce publish
+
+# Optional: pre-build a .vsix to inspect
+vsce package
+```
 
 ## License
 
