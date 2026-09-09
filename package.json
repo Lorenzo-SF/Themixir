@@ -19,9 +19,19 @@
   "contributes": {
     "themes": [
       {
+        "label": "Themixir Red Solarized",
+        "uiTheme": "vs",
+        "path": "./themes/red_solarized.json"
+      },
+      {
         "label": "Themixir Red Light",
         "uiTheme": "vs",
         "path": "./themes/red_light.json"
+      },
+      {
+        "label": "Themixir Red",
+        "uiTheme": "vs-dark",
+        "path": "./themes/red.json"
       },
       {
         "label": "Themixir Red Dark",
@@ -29,9 +39,14 @@
         "path": "./themes/red_dark.json"
       },
       {
-        "label": "Themixir Red Deep",
+        "label": "Themixir Red Solarized Dark",
         "uiTheme": "vs-dark",
-        "path": "./themes/red_deep.json"
+        "path": "./themes/red_solarized_dark.json"
+      },
+      {
+        "label": "Themixir Green Solarized",
+        "uiTheme": "vs",
+        "path": "./themes/green_solarized.json"
       },
       {
         "label": "Themixir Green Light",
@@ -39,14 +54,24 @@
         "path": "./themes/green_light.json"
       },
       {
+        "label": "Themixir Green",
+        "uiTheme": "vs-dark",
+        "path": "./themes/green.json"
+      },
+      {
         "label": "Themixir Green Dark",
         "uiTheme": "vs-dark",
         "path": "./themes/green_dark.json"
       },
       {
-        "label": "Themixir Green Deep",
+        "label": "Themixir Green Solarized Dark",
         "uiTheme": "vs-dark",
-        "path": "./themes/green_deep.json"
+        "path": "./themes/green_solarized_dark.json"
+      },
+      {
+        "label": "Themixir Blue Solarized",
+        "uiTheme": "vs",
+        "path": "./themes/blue_solarized.json"
       },
       {
         "label": "Themixir Blue Light",
@@ -54,14 +79,24 @@
         "path": "./themes/blue_light.json"
       },
       {
+        "label": "Themixir Blue",
+        "uiTheme": "vs-dark",
+        "path": "./themes/blue.json"
+      },
+      {
         "label": "Themixir Blue Dark",
         "uiTheme": "vs-dark",
         "path": "./themes/blue_dark.json"
       },
       {
-        "label": "Themixir Blue Deep",
+        "label": "Themixir Blue Solarized Dark",
         "uiTheme": "vs-dark",
-        "path": "./themes/blue_deep.json"
+        "path": "./themes/blue_solarized_dark.json"
+      },
+      {
+        "label": "Themixir Purple Solarized",
+        "uiTheme": "vs",
+        "path": "./themes/purple_solarized.json"
       },
       {
         "label": "Themixir Purple Light",
@@ -69,14 +104,24 @@
         "path": "./themes/purple_light.json"
       },
       {
+        "label": "Themixir Purple",
+        "uiTheme": "vs-dark",
+        "path": "./themes/purple.json"
+      },
+      {
         "label": "Themixir Purple Dark",
         "uiTheme": "vs-dark",
         "path": "./themes/purple_dark.json"
       },
       {
-        "label": "Themixir Purple Deep",
+        "label": "Themixir Purple Solarized Dark",
         "uiTheme": "vs-dark",
-        "path": "./themes/purple_deep.json"
+        "path": "./themes/purple_solarized_dark.json"
+      },
+      {
+        "label": "Themixir Orange Solarized",
+        "uiTheme": "vs",
+        "path": "./themes/orange_solarized.json"
       },
       {
         "label": "Themixir Orange Light",
@@ -84,29 +129,49 @@
         "path": "./themes/orange_light.json"
       },
       {
+        "label": "Themixir Orange",
+        "uiTheme": "vs-dark",
+        "path": "./themes/orange.json"
+      },
+      {
         "label": "Themixir Orange Dark",
         "uiTheme": "vs-dark",
         "path": "./themes/orange_dark.json"
       },
       {
-        "label": "Themixir Orange Deep",
+        "label": "Themixir Orange Solarized Dark",
         "uiTheme": "vs-dark",
-        "path": "./themes/orange_deep.json"
+        "path": "./themes/orange_solarized_dark.json"
       },
       {
-        "label": "Themixir Light Blue Light",
+        "label": "Themixir Light_blue Solarized",
+        "uiTheme": "vs",
+        "path": "./themes/light_blue_solarized.json"
+      },
+      {
+        "label": "Themixir Light_blue Light",
         "uiTheme": "vs",
         "path": "./themes/light_blue_light.json"
       },
       {
-        "label": "Themixir Light Blue Dark",
+        "label": "Themixir Light_blue",
+        "uiTheme": "vs-dark",
+        "path": "./themes/light_blue.json"
+      },
+      {
+        "label": "Themixir Light_blue Dark",
         "uiTheme": "vs-dark",
         "path": "./themes/light_blue_dark.json"
       },
       {
-        "label": "Themixir Light Blue Deep",
+        "label": "Themixir Light_blue Solarized Dark",
         "uiTheme": "vs-dark",
-        "path": "./themes/light_blue_deep.json"
+        "path": "./themes/light_blue_solarized_dark.json"
+      },
+      {
+        "label": "Themixir Gold Solarized",
+        "uiTheme": "vs",
+        "path": "./themes/gold_solarized.json"
       },
       {
         "label": "Themixir Gold Light",
@@ -114,14 +179,24 @@
         "path": "./themes/gold_light.json"
       },
       {
+        "label": "Themixir Gold",
+        "uiTheme": "vs-dark",
+        "path": "./themes/gold.json"
+      },
+      {
         "label": "Themixir Gold Dark",
         "uiTheme": "vs-dark",
         "path": "./themes/gold_dark.json"
       },
       {
-        "label": "Themixir Gold Deep",
+        "label": "Themixir Gold Solarized Dark",
         "uiTheme": "vs-dark",
-        "path": "./themes/gold_deep.json"
+        "path": "./themes/gold_solarized_dark.json"
+      },
+      {
+        "label": "Themixir Silver Solarized",
+        "uiTheme": "vs",
+        "path": "./themes/silver_solarized.json"
       },
       {
         "label": "Themixir Silver Light",
@@ -129,14 +204,24 @@
         "path": "./themes/silver_light.json"
       },
       {
+        "label": "Themixir Silver",
+        "uiTheme": "vs-dark",
+        "path": "./themes/silver.json"
+      },
+      {
         "label": "Themixir Silver Dark",
         "uiTheme": "vs-dark",
         "path": "./themes/silver_dark.json"
       },
       {
-        "label": "Themixir Silver Deep",
+        "label": "Themixir Silver Solarized Dark",
         "uiTheme": "vs-dark",
-        "path": "./themes/silver_deep.json"
+        "path": "./themes/silver_solarized_dark.json"
+      },
+      {
+        "label": "Themixir Copper Solarized",
+        "uiTheme": "vs",
+        "path": "./themes/copper_solarized.json"
       },
       {
         "label": "Themixir Copper Light",
@@ -144,14 +229,24 @@
         "path": "./themes/copper_light.json"
       },
       {
+        "label": "Themixir Copper",
+        "uiTheme": "vs-dark",
+        "path": "./themes/copper.json"
+      },
+      {
         "label": "Themixir Copper Dark",
         "uiTheme": "vs-dark",
         "path": "./themes/copper_dark.json"
       },
       {
-        "label": "Themixir Copper Deep",
+        "label": "Themixir Copper Solarized Dark",
         "uiTheme": "vs-dark",
-        "path": "./themes/copper_deep.json"
+        "path": "./themes/copper_solarized_dark.json"
+      },
+      {
+        "label": "Themixir Magenta Solarized",
+        "uiTheme": "vs",
+        "path": "./themes/magenta_solarized.json"
       },
       {
         "label": "Themixir Magenta Light",
@@ -159,14 +254,19 @@
         "path": "./themes/magenta_light.json"
       },
       {
+        "label": "Themixir Magenta",
+        "uiTheme": "vs-dark",
+        "path": "./themes/magenta.json"
+      },
+      {
         "label": "Themixir Magenta Dark",
         "uiTheme": "vs-dark",
         "path": "./themes/magenta_dark.json"
       },
       {
-        "label": "Themixir Magenta Deep",
+        "label": "Themixir Magenta Solarized Dark",
         "uiTheme": "vs-dark",
-        "path": "./themes/magenta_deep.json"
+        "path": "./themes/magenta_solarized_dark.json"
       }
     ]
   }

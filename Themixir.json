@@ -1,192 +1,96 @@
 {
-  "Themixir Red": {
-    "file": "themixir_red.png",
-    "themixir_red_dark": {
-      "background": "#120A0A",
-      "foreground": "#E0D6D6",
-      "selection": "#C0392B",
-      "comments": "#8A6E6E",
-      "strings": "#FFD166",
-      "keywords": "#FF6B35"
-    },
-    "themixir_red_light": {
-      "background": "#F8F0F0",
-      "foreground": "#332222",
-      "selection": "#A62B2B",
-      "comments": "#B59A9A",
-      "strings": "#D4A017",
-      "keywords": "#E55A2D"
-    }
+  "_meta": {
+    "schema_version": 2,
+    "note": "Each color has: selection (vibrant base, used for cursor/badge/highlight), accent (slightly darker/lighter for keywords/storage — never identical to selection), and 5 variants (light/normal/dark/solarized/solarized_dark) with their own bg+fg. Comments/strings/numbers are derived algorithmically by the generator."
   },
-  "Themixir Green": {
-    "file": "themixir_green.png",
-    "themixir_green_dark": {
-      "background": "#0D140D",
-      "foreground": "#E1E8E1",
-      "selection": "#88B04B",
-      "comments": "#64755E",
-      "strings": "#D4E157",
-      "keywords": "#93C572"
-    },
-    "themixir_green_light": {
-      "background": "#F1F8E9",
-      "foreground": "#2E3D24",
-      "selection": "#8BC34A",
-      "comments": "#9EAD94",
-      "strings": "#AFB42B",
-      "keywords": "#558B2F"
-    }
+  "red": {
+    "selection": "#E63946",
+    "accent": "#C0392B",
+    "light":         { "bg": "#FBEDED", "fg": "#3D1717" },
+    "normal":        { "bg": "#1E1E1E", "fg": "#D4D4D4" },
+    "dark":          { "bg": "#1F0F11", "fg": "#F5D5D5" },
+    "solarized":     { "bg": "#FDF6E3", "fg": "#586E75" },
+    "solarized_dark":{ "bg": "#002B36", "fg": "#93A1A1" }
   },
-  "Themixir Blue": {
-    "file": "themixir_blue.png",
-    "themixir_blue_dark": {
-      "background": "#0A0A12",
-      "foreground": "#D6D6E0",
-      "selection": "#06B6D4",
-      "comments": "#6E6E8A",
-      "strings": "#93C5FD",
-      "keywords": "#3B82F6"
-    },
-    "themixir_blue_light": {
-      "background": "#F0F0F8",
-      "foreground": "#222233",
-      "selection": "#059AC1",
-      "comments": "#9AB5D5",
-      "strings": "#73A8E2",
-      "keywords": "#2D67C1"
-    }
+  "green": {
+    "selection": "#4CAF50",
+    "accent": "#388E3C",
+    "light":         { "bg": "#F0F5EC", "fg": "#1F2E14" },
+    "normal":        { "bg": "#1E1E1E", "fg": "#D4D4D4" },
+    "dark":          { "bg": "#0E1810", "fg": "#D5E8D5" },
+    "solarized":     { "bg": "#FDF6E3", "fg": "#586E75" },
+    "solarized_dark":{ "bg": "#002B36", "fg": "#93A1A1" }
   },
-  "Themixir Purple": {
-    "file": "themixir_purple.png",
-    "themixir_purple_dark": {
-      "background": "#120A12",
-      "foreground": "#D6D0D6",
-      "selection": "#8B5CF6",
-      "comments": "#8A6E8A",
-      "strings": "#F43F5E",
-      "keywords": "#A78BFA"
-    },
-    "themixir_purple_light": {
-      "background": "#F0E6F0",
-      "foreground": "#332233",
-      "selection": "#7547D6",
-      "comments": "#B59AB5",
-      "strings": "#E22D4E",
-      "keywords": "#9471D5"
-    }
+  "blue": {
+    "selection": "#2E86DE",
+    "accent": "#1976D2",
+    "light":         { "bg": "#EBF1F8", "fg": "#15233D" },
+    "normal":        { "bg": "#1E1E1E", "fg": "#D4D4D4" },
+    "dark":          { "bg": "#0F121A", "fg": "#D5D8E5" },
+    "solarized":     { "bg": "#FDF6E3", "fg": "#586E75" },
+    "solarized_dark":{ "bg": "#002B36", "fg": "#93A1A1" }
   },
-  "Themixir Orange": {
-    "file": "themixir_orange.png",
-    "themixir_orange_dark": {
-      "background": "#120A00",
-      "foreground": "#E0D6C8",
-      "selection": "#FF9800",
-      "comments": "#8A6E5A",
-      "strings": "#0EA5E9",
-      "keywords": "#FF9800"
-    },
-    "themixir_orange_light": {
-      "background": "#FFF0E6",
-      "foreground": "#33221A",
-      "selection": "#F57C00",
-      "comments": "#B59A8A",
-      "strings": "#0C8FD1",
-      "keywords": "#F57C00"
-    }
+  "purple": {
+    "selection": "#9B59B6",
+    "accent": "#8E44AD",
+    "light":         { "bg": "#F2E8F5", "fg": "#2A1538" },
+    "normal":        { "bg": "#1E1E1E", "fg": "#D4D4D4" },
+    "dark":          { "bg": "#150E18", "fg": "#E5D5E8" },
+    "solarized":     { "bg": "#FDF6E3", "fg": "#586E75" },
+    "solarized_dark":{ "bg": "#002B36", "fg": "#93A1A1" }
   },
-  "Themixir Light Blue": {
-    "file": "themixir_light_blue.png",
-    "themixir_light_blue_dark": {
-      "background": "#0A0D12",
-      "foreground": "#D6D6E0",
-      "selection": "#81D4FA",
-      "comments": "#4A6B8A",
-      "strings": "#63B3ED",
-      "keywords": "#1E56A0"
-    },
-    "themixir_light_blue_light": {
-      "background": "#F0F5F8",
-      "foreground": "#1A2B3A",
-      "selection": "#5A9EC3",
-      "comments": "#7A9AB5",
-      "strings": "#3A86C3",
-      "keywords": "#0D3A6A"
-    }
+  "orange": {
+    "selection": "#FF7043",
+    "accent": "#E64A19",
+    "light":         { "bg": "#FBEDE5", "fg": "#3D1D0E" },
+    "normal":        { "bg": "#1E1E1E", "fg": "#D4D4D4" },
+    "dark":          { "bg": "#1A0E07", "fg": "#F5E0D0" },
+    "solarized":     { "bg": "#FDF6E3", "fg": "#586E75" },
+    "solarized_dark":{ "bg": "#002B36", "fg": "#93A1A1" }
   },
-  "Themixir Gold": {
-    "file": "themixir_gold.png",
-    "themixir_gold_dark": {
-      "background": "#0A0A05",
-      "foreground": "#E0D6C8",
-      "selection": "#FFD700",
-      "comments": "#8A6E5A",
-      "strings": "#00B8D4",
-      "keywords": "#FFD700"
-    },
-    "themixir_gold_light": {
-      "background": "#FFF0E6",
-      "foreground": "#33221A",
-      "selection": "#D4AF37",
-      "comments": "#B59A8A",
-      "strings": "#008E9B",
-      "keywords": "#D4AF37"
-    }
+  "light_blue": {
+    "selection": "#5DADE2",
+    "accent": "#3498DB",
+    "light":         { "bg": "#E8F1F8", "fg": "#102538" },
+    "normal":        { "bg": "#1E1E1E", "fg": "#D4D4D4" },
+    "dark":          { "bg": "#0F1419", "fg": "#D5DEE8" },
+    "solarized":     { "bg": "#FDF6E3", "fg": "#586E75" },
+    "solarized_dark":{ "bg": "#002B36", "fg": "#93A1A1" }
   },
-  "Themixir Silver": {
-    "file": "themixir_silver.png",
-    "themixir_silver_dark": {
-      "background": "#121212",
-      "foreground": "#E0E0E0",
-      "selection": "#A9A9A9",
-      "comments": "#87CEFA",
-      "strings": "#98FB98",
-      "keywords": "#FF4500"
-    },
-    "themixir_silver_light": {
-      "background": "#F0F0F0",
-      "foreground": "#333333",
-      "selection": "#808080",
-      "comments": "#6495ED",
-      "strings": "#32CD32",
-      "keywords": "#FF0000"
-    }
+  "gold": {
+    "selection": "#F39C12",
+    "accent": "#B7791F",
+    "light":         { "bg": "#FAF0DA", "fg": "#3D2F0A" },
+    "normal":        { "bg": "#1E1E1E", "fg": "#D4D4D4" },
+    "dark":          { "bg": "#1A1407", "fg": "#F0E5C0" },
+    "solarized":     { "bg": "#FDF6E3", "fg": "#586E75" },
+    "solarized_dark":{ "bg": "#002B36", "fg": "#93A1A1" }
   },
-  "Themixir Copper": {
-    "file": "themixir_copper.png",
-    "themixir_copper_dark": {
-      "background": "#0A0500",
-      "foreground": "#E0D6C8",
-      "selection": "#B87333",
-      "comments": "#8A6E5A",
-      "strings": "#00B8D4",
-      "keywords": "#A52A2A"
-    },
-    "themixir_copper_light": {
-      "background": "#FFF0E6",
-      "foreground": "#33221A",
-      "selection": "#8B4513",
-      "comments": "#B59A8A",
-      "strings": "#008E9B",
-      "keywords": "#8B0000"
-    }
+  "silver": {
+    "selection": "#A6ACAF",
+    "accent": "#7F8C8D",
+    "light":         { "bg": "#F2F2F2", "fg": "#2C2C2C" },
+    "normal":        { "bg": "#1E1E1E", "fg": "#D4D4D4" },
+    "dark":          { "bg": "#181818", "fg": "#E0E0E0" },
+    "solarized":     { "bg": "#FDF6E3", "fg": "#586E75" },
+    "solarized_dark":{ "bg": "#002B36", "fg": "#93A1A1" }
   },
-  "Themixir Magenta": {
-    "file": "themixir_magenta.png",
-    "themixir_magenta_dark": {
-      "background": "#120A12",
-      "foreground": "#D6D0D6",
-      "selection": "#FF0090",
-      "comments": "#8A6E8A",
-      "strings": "#F43F5E",
-      "keywords": "#FF0090"
-    },
-    "themixir_magenta_light": {
-      "background": "#F0E6F0",
-      "foreground": "#332233",
-      "selection": "#C2006B",
-      "comments": "#B59AB5",
-      "strings": "#E22D4E",
-      "keywords": "#C2006B"
-    }
+  "copper": {
+    "selection": "#B87333",
+    "accent": "#8B4513",
+    "light":         { "bg": "#FAEFE5", "fg": "#3D2510" },
+    "normal":        { "bg": "#1E1E1E", "fg": "#D4D4D4" },
+    "dark":          { "bg": "#150A02", "fg": "#E5D5C0" },
+    "solarized":     { "bg": "#FDF6E3", "fg": "#586E75" },
+    "solarized_dark":{ "bg": "#002B36", "fg": "#93A1A1" }
+  },
+  "magenta": {
+    "selection": "#E91E63",
+    "accent": "#C2185B",
+    "light":         { "bg": "#FBEDF2", "fg": "#3D0F1F" },
+    "normal":        { "bg": "#1E1E1E", "fg": "#D4D4D4" },
+    "dark":          { "bg": "#180710", "fg": "#F0D5E0" },
+    "solarized":     { "bg": "#FDF6E3", "fg": "#586E75" },
+    "solarized_dark":{ "bg": "#002B36", "fg": "#93A1A1" }
   }
 }
