@@ -1,0 +1,29 @@
+# Exclude dev files from the published .vsix.
+# The runtime only needs: package.json, themixir_icon.png, themes/*.json, README.md, CHANGELOG.md (if present).
+
+.gitignore
+.git/
+.gitattributes
+
+# Dev / source — never shipped to users
+generate_themes.py
+__pycache__/
+*.py[cod]
+Themixir.json
+
+# Docs for maintainers, not users
+docs/
+
+# Release tooling
+scripts/
+
+# Build artefacts
+*.vsix
+
+# Editor noise
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

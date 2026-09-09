@@ -1,0 +1,147 @@
+# Changelog
+
+All notable changes to **Themixir** are documented here. The format is
+based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
+this project adheres to [Semantic Versioning](https://semver.org/).
+
+> **Convention for this project**
+> - **major**: breaking palette overhaul, large token remapping, or rename.
+>   Users may need to re-pick their theme.
+> - **minor**: new colours added (new base hue) or new variants. New themes
+>   appear in the picker.
+> - **patch**: tweaks to existing palettes, contrast fixes, added workbench
+>   colour coverage. No new themes.
+
+## [2.0.0] — 2026-09-09
+
+### Changed — BREAKING
+
+- **Palette schema overhaul.** `Themixir.json` is now schema v2: each of the
+  10 base colours (red, green, blue, purple, orange, light blue, gold,
+  silver, copper, magenta) declares a `selection` (vibrant base used for
+  cursor, badge, selection highlight) and an `accent` (slightly darker or
+  lighter hue used for keywords, storage, button backgrounds). Previously
+  keywords and selection shared the same colour on several themes (gold,
+  magenta, etc.), which collapsed visual hierarchy. **Action for theme
+  authors**: re-edit `Themixir.json` if you forked the old schema.
+- **Theme variants restructured.** Each colour now ships with **5
+  variants** instead of 3:
+  - **solarized** (`#FDF6E3` base, Solarized Light hue family)
+  - **light** (clear light background with a strong tint of the colour)
+  - **normal** (neutral `#1E1E1E` background — no colour tint)
+  - **dark** (saturated dark background with the colour family)
+  - **solarized_dark** (`#002B36` base, Solarized Dark hue family)
+  - The previous `light`/`dark`/`deep` names map approximately to the new
+    `light`/`dark`/`dark` (deep was renamed to `dark`).
+- **`silver` theme rebuilt.** Old silver used rainbow accents (blue
+  comments, green strings, orange keywords). Now silver is a proper
+  neutral theme with all tokens in greys + one accent colour for keywords.
+- **Generator rewritten.** `generate_themes.py` is now a deterministic,
+  pure-Python colour-math pipeline (HSL harmonies, darken/lighten, WCAG
+  ratio). It no longer shells out to `alaja` per colour except for
+  validation. Output is byte-stable across runs.
+
+### Added
+
+- **Full workbench coverage**: every theme now defines ~290 `colors`
+  keys (up from ~30). New coverage includes:
+  - `editor.findMatch{Background,Border}`, `editor.wordHighlight*`,
+    `editor.selectionHighlightBackground`,
+    `editor.linkedEditingBackground`,
+    `editor.hoverHighlightBackground`,
+    `editorBracketMatch.*`, `editorIndentGuide.*`,
+    `editorGutter.*`, `editorLineNumber.*`,
+    `editorMarkerNavigation*`, `editorError/Warning/Info.*`,
+    `editorSuggestWidget.*`, `editorHoverWidget.*`,
+    `editorWidget.*`, `editorCodeLens.foreground`,
+    `editorLightBulb{,.AutoFix}.foreground`.
+  - **Terminal ANSI 16**: every `terminal.ansi{Bright,}Black/Red/Green/
+    Yellow/Blue/Magenta/Cyan/White` is now themed.
+  - **Git decorations**: `gitDecoration.{added,modified,deleted,
+    untracked,ignored,conflicting,submodule}ResourceForeground`.
+  - `focusBorder`, `scrollbarSlider.*`, `badge.*`, `menu.*`,
+    `list.*`, `button.*`, `input.*`, `inputValidation.*`,
+    `dropdown.*`, `checkbox.*`, `progressBar.background`,
+    `notificationCenter*`, `notifications.{info,warning,error}{Icon,
+    Foreground,Background}`, `breadcrumb.*`, `settings.*` (header,
+    modifiedItem, dropdown, textInput, numberInput, checkbox, rowHover),
+    `minimap.{findMatch,error,warning}Highlight` + sliders,
+    `peekView.*`, `diffEditor.*`, `merge.*`, `charts.*`,
+    `welcomePage.*`, `walkThrough.*`, `keybindingLabel.*`,
+    `textLink.*`, `textBlockQuote.*`, `tree.*`.
+- **Expanded `tokenColors`**: ~60 scopes per theme (up from 15). New
+  scopes cover Markdown (`markup.heading/bold/italic/underline/
+  inline.raw/list.*/quote/deleted/inserted/changed`), HTML/JSX
+  (`entity.name.tag`, `entity.other.attribute-name`), support library
+  (`support.function/constant/variable/class/type`), `constant.character
+  {,.escape}`, `constant.language`, `variable.other.constant`,
+  `storage.modifier`, `punctuation.definition.{string,comment,tag}`,
+  `meta.diff{,header}`, `meta.range`, `invalid{,.deprecated,.illegal}`,
+  `emphasis.{strong,italic}`, `entity.name.link`.
+- **WCAG-AA validation & auto-fix**. The generator now measures every
+  foreground colour against its background using the standard WCAG 2.1
+  relative-luminance formula. Failed pairs (ratio <4.5 for text, <3.0
+  for decorative scopes) are automatically direction-aware darkened or
+  lightened until they pass. All 50 generated themes meet:
+  - editor fg vs bg ≥ 4.5
+  - statusBar fg vs bg ≥ 4.5
+  - activityBarBadge fg vs bg ≥ 4.5
+  - editorCursor vs bg ≥ 3.0
+  - accent (keyword) vs bg ≥ 4.5
+  - critical tokens (string, keyword, num, storage, constant.language) ≥ 4.5
+  - decorative tokens (comment, function, class, type, param, prop,
+    regex) ≥ 3.0
+- **`docs/PUBLISHING.md`**: full step-by-step VS Code Marketplace
+  publishing workflow (Azure DevOps PAT, `vsce login`, `vsce package`,
+  `vsce publish`, version policy, smoke test, optional GitHub Actions
+  release flow).
+- **`scripts/release.sh`**: bumps the `package.json` version
+  (patch|minor|major), regenerates themes, commits with conventional
+  message, and tags. Does **not** push or publish — you stay in control.
+- **`.vscodeignore`**: excludes dev artefacts (`generate_themes.py`,
+  `Themixir.json`, `__pycache__/`, `docs/`, `scripts/`, `.git/`,
+  `.vscode/`, `*.vsix`) from the published `.vsix`.
+
+### Removed
+
+- The 10 `*_deep.json` theme files (replaced by the more inclusive
+  `*_dark.json`).
+- The old `comments`/`strings`/`keywords`/`background`/`foreground`
+  flat schema in `Themixir.json`. See "Palette schema overhaul" above.
+
+### Fixed
+
+- The `silver` theme no longer uses rainbow accents that contradicted
+  the silver hue.
+- `gold_dark`, `magenta_dark` and similar themes no longer render
+  keywords and selection in identical colours (which collapsed visual
+  hierarchy).
+- `orange_light` keyword was unreadable (orange `#FF9800` on `#FFF0E6`,
+  ratio ≈2.0). Now uses a darker accent that passes AA.
+
+## [1.0.2] — 2026-09-08
+
+### Changed
+
+- Improvements to colour calculation driven by `alaja`. The generator
+  was rewritten to consume `alaja`'s `harmonies` output via regex
+  parsing, fixing previous silent failures when `alaja` returned an
+  unexpected shape.
+
+## [1.0.0] — 2026-09-04
+
+### Added
+
+- Initial release of Themixir.
+- 30 themes (10 colours × 3 variants: light, dark, deep).
+- Coverage of `editor.background/foreground`, selection, cursor,
+  `editorBracketMatch`, terminal background and foreground, sideBar,
+  statusBar, activityBar, titleBar, tabs.
+- Token coverage for comment, string, string.regexp, constant.numeric,
+  constant.language, keyword, storage, storage.type, entity.name.
+  function, entity.name.class, entity.name.type, variable,
+  variable.parameter, variable.other.property, punctuation.
+
+[2.0.0]: https://github.com/lorenzo-sf/themixir/releases/tag/v2.0.0
+[1.0.2]: https://github.com/lorenzo-sf/themixir/releases/tag/v1.0.2
+[1.0.0]: https://github.com/lorenzo-sf/themixir/releases/tag/v1.0.0
