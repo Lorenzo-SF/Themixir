@@ -12,12 +12,16 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 > - **patch**: tweaks to existing palettes, contrast fixes, added workbench
 >   colour coverage. No new themes.
 
-## [2.0.2] — 2026-09-09
+## [2.0.1] — 2026-09-09
+
+> Two bug-fix passes that the maintainer wanted to bundle into a single
+> `2.0.1` release. The first pass fixed bg variants; the second pass
+> fixed token hue family. Both ship together as `2.0.1`.
 
 ### Fixed
 
 - **Token hues no longer escape their colour family.** The previous
-  2.0.1 release used `triad` and `split_complementary` harmonies to seed
+  2.0.0 release used `triad` and `split_complementary` harmonies to seed
   the token palette, which could push a token into the colour's
   complement (e.g. green `#3FA34D` at hue 125° had a `class` token at
   hue 5° = `#A34D3F`, a clear red). Now every token role maps to one
@@ -41,10 +45,46 @@ this project adheres to [Semantic Versioning](https://semver.org/).
   No green theme has a red token. No blue theme has an orange token.
   Every token stays within 30° of the accent's hue.
 
-- `Themixir.json` bumped to schema v4 with an optional `hue_shift_deg`
-  per colour (currently unused — kept for future tuning if needed).
+- **Each colour has a strong, distinct background tint.** The previous
+  2.0.0 release shipped hardcoded tinted bg/fg pairs that were
+  visually similar across colours (all "lights" looked pale-pink,
+  all "darks" looked near-black). Themes now call `alaja` to produce
+  the light/dark backgrounds from each palette's own `selection`
+  colour. Red's light bg is `#F8C4C8`, Green's is `#C5E3CA`,
+  Blue's is `#BED9F6`, etc. Same story for the dark variants.
 
-## [2.0.1] — 2026-09-09
+- **Generator fully delegates to `alaja`.** Harmonies (`triad`,
+  `analogous`, `complementary`, `split_complementary`), lighten and
+  darken are all `alaja` subprocess calls now, cached per `(cmd)`.
+  The 50 themes share the cache so total generation is ~3 minutes
+  instead of 50× the per-theme cost.
+
+- **`Themixir.json` slimmed to schema v3/4.** Only `selection` +
+  `accent` (and optional `hue_shift_deg`) per colour — variants are
+  no longer hardcoded. 10 colours × 5 variants is fully derived.
+
+- **WCAG auto-fix is direction-agnostic.** The previous version tried
+  only one direction (lighten or darken) which could push a colour
+  *closer* to the background. Now it tries both and picks the first
+  crossing of the threshold, with a pure-black-or-white fallback.
+  All 50 themes pass WCAG-AA on critical tokens and WCAG-large on
+  decorative scopes.
+
+### Verified spot-checks (light variant bg per colour)
+
+```
+red_light      #F8C4C8   green_light    #C5E3CA
+blue_light     #BED9F6   purple_light   #E1CDE9
+orange_light   #FFD4C7   light_blue_light #C5EAF1
+gold_light     #F8E3B9   silver_light   #E2E4E6
+copper_light   #EAD5C2   magenta_light  #F8BCD0
+
+red_dark       #451115   green_dark     #133117
+blue_dark      #0B2643   purple_dark    #2E1B37
+orange_dark    #4C2214   light_blue_dark  #13373E
+gold_dark      #463107   silver_dark    #2F3134
+copper_dark    #37220F   magenta_dark   #46091E
+```
 
 ### Changed
 
