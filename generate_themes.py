@@ -64,11 +64,16 @@ DARKEN_STEPS = 7
 # Token palette roles → which slot of the colour-family palette to use.
 # Every role stays within the colour's own hue family: no complement,
 # no triad+240°, no split+210°. Only lightness/hue ±30° variants of the
-# base accent. This is the key fix for "every theme looks the same
-# / red dominates" — see Themixir 2.0.2 changelog.
+# base accent.
+#
+# `keyword` and `storage` use `lighter` (not `core`) so that an accent
+# like saturated blue/green doesn't read as "everything is a keyword
+# AND it's neon" — a common complaint against high-saturation themes.
+# The accent is still used for chrome (statusBar, button, badge) so
+# the colour identity is intact.
 TOKEN_ROLE_TO_SLOT = {
-    "keyword":              "core",
-    "storage":              "core",
+    "keyword":              "lighter",
+    "storage":              "lighter",
     "string":               "ana_plus",       # base +30° hue
     "string_regex":         "ana_minus",      # base -30° hue
     "number":               "lighter",        # base +30% lightness
@@ -218,7 +223,11 @@ def _ensure_contrast(fg: str, bg: str, min_ratio: float = 4.5) -> str:
 # ----------------------------------------------------------------------
 
 def _alpha(hex_color: str, alpha_hex: str) -> str:
-    return hex_color.lstrip("#") + alpha_hex.upper()
+    """Append 2-digit alpha to a 6-digit hex, preserving the leading #.
+
+    e.g. _alpha('#5D93CD', '30') -> '#5D93CD30', not '5D93CD30'.
+    """
+    return "#" + hex_color.lstrip("#") + alpha_hex.upper()
 
 
 def _best_contrast_fg(against: str, candidates: list[str]) -> str:
@@ -844,9 +853,14 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
         {"scope": "variable.other.constant",
          "settings": {"foreground": tokens["number"]}},
 
-        # Keywords / storage
+        # Keywords / storage.
+        # `keyword` (generic) is italic only — avoids painting every
+        # grammar-assigned keyword in bold + saturated colour, which
+        # reads as "neon fever dream" against a coloured background.
+        # `keyword.control` (if/for/while/etc.) keeps bold because
+        # control flow keywords deserve visual weight.
         {"scope": "keyword",
-         "settings": {"foreground": tokens["keyword"], "fontStyle": "bold"}},
+         "settings": {"foreground": tokens["keyword"], "fontStyle": "italic"}},
         {"scope": "keyword.control",
          "settings": {"foreground": tokens["keyword"], "fontStyle": "bold"}},
         {"scope": "keyword.operator",
@@ -860,7 +874,9 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
         {"scope": "storage.type",
          "settings": {"foreground": tokens["type"], "fontStyle": "italic"}},
 
-        # Entities
+        # Entities. Functions are NOT bold — they're so frequent that
+        # bold + bright accent reads as visual noise. Class/struct
+        # names keep bold (rare, deserve weight).
         {"scope": "entity.name.function",
          "settings": {"foreground": tokens["function"]}},
         {"scope": "entity.name.function.member",
@@ -908,16 +924,14 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
         {"scope": "punctuation.separator",
          "settings": {"foreground": _alpha(fg, "B0")}},
 
-        # Invalid
-        {"scope": "invalid",
-         "settings": {"foreground": tokens["keyword"],
-                      "fontStyle": "bold underline"}},
-        {"scope": "invalid.deprecated",
-         "settings": {"foreground": tokens["keyword"],
-                      "fontStyle": "bold underline"}},
-        {"scope": "invalid.illegal",
-         "settings": {"foreground": tokens["keyword"],
-                      "fontStyle": "bold underline"}},
+        # NOTE: `invalid` / `invalid.deprecated` / `invalid.illegal`
+        # are intentionally NOT overridden. VSCode's default
+        # rendering for these scopes is the squiggly red underline
+        # that signals a syntax error. Painting it with the theme
+        # accent (especially in bold + underline) was creating
+        # false-positive "everything is an error" appearances and
+        # also stealing the canonical red error marker from real
+        # issues. We let VSCode handle these.
 
         # Markup
         {"scope": "markup.heading",

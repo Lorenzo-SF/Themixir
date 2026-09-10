@@ -14,11 +14,8 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.0.1] — 2026-09-09
 
-> Three bug-fix passes the maintainer wanted to bundle into a single
-> `2.0.1` release. The first pass fixed bg variants; the second pass
-> fixed token hue family; the third pass plugged workbench colour
-> defaults that were leaking VSCode's red error markers into the UI.
-> All three ship together as `2.0.1`.
+> Four bug-fix passes the maintainer wanted to bundle into a single
+> `2.0.1` release. All four ship together as `2.0.1`.
 
 ### Fixed
 
@@ -69,6 +66,31 @@ this project adheres to [Semantic Versioning](https://semver.org/).
   palette (One Dark for dark themes, Solarized for light themes)
   that lightens or darkens based on bg. The user always sees
   green/blue/red/cyan/magenta/yellow as expected.
+
+- **`invalid` / `invalid.deprecated` / `invalid.illegal` are no
+  longer overridden.** VSCode's default rendering for these scopes is
+  the squiggly red underline that signals a syntax error. Painting
+  them with the theme accent (especially in `bold underline`) was
+  creating false-positive "everything is an error" appearances and
+  also stealing the canonical red error marker from real issues. We
+  now let VSCode handle these.
+
+- **`_alpha()` now keeps the leading `#`.** The previous version
+  stripped the `#` when concatenating a 2-digit alpha channel, so
+  generated themes contained 137+ colour values without a leading
+  `#` (e.g. `5D93CD30` instead of `#5D93CD30`). VSCode accepted
+  these in some versions but it's fragile. Fixed.
+
+- **Keyword tokens are no longer bold-accent combinations.** Reviewer
+  feedback noted that `keyword` + bold + saturated accent (the
+  theme's own colour) reads as visual noise: "almost everything
+  becomes blue and bold". `keyword` (generic) is now italic only;
+  `keyword.control` (if/for/while/etc.) keeps bold because those
+  deserve weight; `entity.name.function` is no longer bold (functions
+  are so frequent that bold + colour becomes noise); `entity.name.class`
+  and `entity.name.struct` keep bold because they are rare. `keyword`
+  slot also moved from `core` (the most saturated accent) to
+  `lighter` (one shade up) for less visual aggression.
 
 - **Each colour has a strong, distinct background tint.** The previous
   2.0.0 release shipped hardcoded tinted bg/fg pairs that were
