@@ -866,6 +866,14 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
 
         # Peek view borders
         "peekViewTitle.border": _alpha(fg, "20"),
+
+        # icon.foreground is the colour used by VSCode for any icons
+        # that respect the colour theme. The activity-bar icons do
+        # honour it on recent VSCode versions, so we set it to accent
+        # as well (alongside activityBar.foreground). This belt-and-
+        # suspenders covers any icon the user might expect to be
+        # themed but that bypasses activityBar.foreground.
+        "icon.foreground": accent,
     }
     colors.update(extra_colors)
 

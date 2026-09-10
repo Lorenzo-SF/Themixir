@@ -331,7 +331,8 @@
     "window.activeBorder": "#CE729A",
     "window.inactiveBorder": "#93A1A120",
     "editor.findMatchHighlightBorder": "#E91E6350",
-    "peekViewTitle.border": "#93A1A120"
+    "peekViewTitle.border": "#93A1A120",
+    "icon.foreground": "#CE729A"
   },
   "tokenColors": [
     {
