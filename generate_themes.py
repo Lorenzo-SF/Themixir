@@ -61,22 +61,25 @@ NORMAL_FG = "#D4D4D4"
 LIGHTEN_STEPS = 7
 DARKEN_STEPS = 7
 
-# Alaja harmonies used to seed each token role.
-# We pick the most visually distinct slots so every colour's token set
-# looks like a *family* rather than a hue rotation of itself.
-TOKEN_HARMONIES = {
-    # role         : (alaja_harmony, index_in_alaja_output, hue_shift_or_None)
-    "comment":     ("analogous",      1, None),   # base ±30° → muted similar hue
-    "string":      ("analogous",      2, None),   # base +30°
-    "string_regex":("split",          2, None),   # base +210°
-    "number":      ("complementary",  1, None),   # base +180°
-    "function":    ("triad",          1, None),   # base +120°
-    "class":       ("triad",          2, None),   # base +240°
-    "type":        ("split",          1, None),   # base +150°
-    "parameter":   ("analogous",      1, None),   # base -30°
-    "property":    ("split",          2, None),   # base +210° (variant of split)
-    "constant_lang": ("complementary", 1, None),  # italic constants
-    "constant_char_escape": ("triad",  2, None),  # escapes (bold-ish)
+# Token palette roles → which slot of the colour-family palette to use.
+# Every role stays within the colour's own hue family: no complement,
+# no triad+240°, no split+210°. Only lightness/hue ±30° variants of the
+# base accent. This is the key fix for "every theme looks the same
+# / red dominates" — see Themixir 2.0.2 changelog.
+TOKEN_ROLE_TO_SLOT = {
+    "keyword":              "core",
+    "storage":              "core",
+    "string":               "ana_plus",       # base +30° hue
+    "string_regex":         "ana_minus",      # base -30° hue
+    "number":               "lighter",        # base +30% lightness
+    "function":             "ana_minus",      # base -30° hue
+    "class":                "much_lighter",   # base +60% lightness
+    "type":                 "darker",         # base -30% lightness
+    "parameter":            "lighter",        # base +30% lightness
+    "property":             "darker",         # base -30% lightness
+    "constant_lang":        "ana_minus",      # base -30° hue
+    "constant_char_escape": "ana_plus",       # base +30° hue
+    "comment":              "much_darker",    # base -60% lightness (decorative)
 }
 
 # Cache alaja results so we don't pay subprocess cost twice.
@@ -268,22 +271,40 @@ def _build_variant_bgfg(variant: str, selection: str) -> tuple[str, str]:
     raise ValueError(f"unknown variant {variant!r}")
 
 
-def _resolve_token(role: str, base: str, accent: str) -> str:
-    """Resolve a token colour for `role` from `base` (usually accent)."""
-    if role == "keyword":
-        return accent
-    harmony_name, idx, _shift = TOKEN_HARMONIES[role]
-    palette = alaja_harmony(base, harmony_name)
-    if idx >= len(palette):
-        # fallback: if alaja returned fewer hues than expected, use base
-        return base
-    return palette[idx]
+def _build_family_palette(accent: str) -> dict[str, str]:
+    """Build a 7-colour palette where every colour stays within the accent's
+    own hue family (no complement, no triad+240°). This prevents a green
+    theme from accidentally producing red/magenta tokens.
+
+    Slots:
+      core          — the accent itself (keywords, storage)
+      lighter       — accent lightened 3 alaja steps (~+30% L)
+      darker        — accent darkened 3 alaja steps (~-30% L)
+      much_lighter  — accent lightened 6 alaja steps (~+60% L)
+      much_darker   — accent darkened 6 alaja steps (~-60% L)
+      ana_plus      — analogous hue +30° (same lightness)
+      ana_minus     — analogous hue -30° (same lightness)
+    """
+    # analogous returns [base, base-30°, base+30°]; alaja's column order
+    # for analogous is "Analogous₁" first (base-30°) then "Analogous₂" (base+30°).
+    ana = alaja_harmony(accent, "analogous")
+    ana_minus = ana[1] if len(ana) > 1 else accent
+    ana_plus = ana[2] if len(ana) > 2 else accent
+    return {
+        "core":         accent,
+        "lighter":      alaja_lighten(accent, 3),
+        "darker":       alaja_darken(accent, 3),
+        "much_lighter": alaja_lighten(accent, 6),
+        "much_darker":  alaja_darken(accent, 6),
+        "ana_plus":     ana_plus,
+        "ana_minus":    ana_minus,
+    }
 
 
 # Roles that need WCAG-AA (≥4.5) against editor background.
 CRITICAL_TOKEN_ROLES = (
-    "keyword", "string", "number", "function", "class",
-    "type", "parameter", "property", "string_regex",
+    "keyword", "storage", "string", "string_regex", "number", "function",
+    "class", "type", "parameter", "property",
     "constant_lang", "constant_char_escape",
 )
 # Roles that only need decorative contrast (≥3.0).
@@ -300,11 +321,12 @@ def _tint_variant_with_token_fix(
     accent = _ensure_contrast(accent, bg, 4.5)
     fg = _ensure_contrast(fg, bg, 4.5)
 
-    # Token palette derived from selection (more variety than from accent alone,
-    # and selection is the "soul" of the colour).
-    tokens: dict[str, str] = {}
-    for role in list(TOKEN_HARMONIES.keys()) + ["keyword"]:
-        tokens[role] = _resolve_token(role, selection, accent)
+    # Build an in-family palette of 7 colour slots, all derived from accent.
+    # Every token role maps to one slot, so no token ever escapes the
+    # colour family (no red tokens in a green theme).
+    palette = _build_family_palette(accent)
+    tokens: dict[str, str] = {role: palette[slot]
+                               for role, slot in TOKEN_ROLE_TO_SLOT.items()}
 
     # Direction-aware auto-fix: try both directions and keep the smaller
     # adjustment that crosses the target threshold.
@@ -898,8 +920,8 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
 def generate_all() -> list[dict]:
     raw = json.loads((ROOT / "Themixir.json").read_text())
     meta = raw.pop("_meta", None)
-    if not meta or meta.get("schema_version") != 3:
-        raise ValueError("Themixir.json missing _meta.schema_version=3")
+    if not meta or meta.get("schema_version") not in (3, 4):
+        raise ValueError("Themixir.json missing _meta.schema_version in {3, 4}")
 
     palettes: dict[str, dict] = raw  # type: ignore
 

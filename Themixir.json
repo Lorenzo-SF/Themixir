@@ -1,16 +1,16 @@
 {
   "_meta": {
-    "schema_version": 3,
-    "note": "Each colour declares just `selection` (vibrant base) and `accent` (slightly darker/lighter derivative). The 5 variants (solarized/light/normal/dark/solarized_dark) and their backgrounds are derived algorithmically by generate_themes.py via alaja, so that every colour has a strong, distinct identity."
+    "schema_version": 4,
+    "note": "Each colour declares selection (vibrant base) + accent (darker derivative) + hue_shift_deg (rotation applied to the harmony base so all token hues stay within the colour's family and never collapse to the complementary wheel position, e.g. red/magenta tokens in a green theme)."
   },
-  "red":         { "selection": "#E63946", "accent": "#B91C2C" },
-  "green":       { "selection": "#3FA34D", "accent": "#2E7D3A" },
-  "blue":        { "selection": "#2680E0", "accent": "#1864B8" },
-  "purple":      { "selection": "#9B59B6", "accent": "#7D3C98" },
-  "orange":      { "selection": "#FF7043", "accent": "#D8501F" },
-  "light_blue":  { "selection": "#3FB8CF", "accent": "#1B8FA3" },
-  "gold":        { "selection": "#E8A317", "accent": "#B07908" },
-  "silver":      { "selection": "#9DA5AC", "accent": "#6F7981" },
-  "copper":      { "selection": "#B87333", "accent": "#8A4F1C" },
-  "magenta":     { "selection": "#E91E63", "accent": "#AD1457" }
+  "red":         { "selection": "#E63946", "accent": "#B91C2C", "hue_shift_deg": 0 },
+  "green":       { "selection": "#3FA34D", "accent": "#2E7D3A", "hue_shift_deg": 60 },
+  "blue":        { "selection": "#2680E0", "accent": "#1864B8", "hue_shift_deg": 0 },
+  "purple":      { "selection": "#9B59B6", "accent": "#7D3C98", "hue_shift_deg": 0 },
+  "orange":      { "selection": "#FF7043", "accent": "#D8501F", "hue_shift_deg": 0 },
+  "light_blue":  { "selection": "#3FB8CF", "accent": "#1B8FA3", "hue_shift_deg": 0 },
+  "gold":        { "selection": "#E8A317", "accent": "#B07908", "hue_shift_deg": 0 },
+  "silver":      { "selection": "#9DA5AC", "accent": "#6F7981", "hue_shift_deg": 0 },
+  "copper":      { "selection": "#B87333", "accent": "#8A4F1C", "hue_shift_deg": 0 },
+  "magenta":     { "selection": "#E91E63", "accent": "#AD1457", "hue_shift_deg": 0 }
 }

@@ -12,6 +12,38 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 > - **patch**: tweaks to existing palettes, contrast fixes, added workbench
 >   colour coverage. No new themes.
 
+## [2.0.2] — 2026-09-09
+
+### Fixed
+
+- **Token hues no longer escape their colour family.** The previous
+  2.0.1 release used `triad` and `split_complementary` harmonies to seed
+  the token palette, which could push a token into the colour's
+  complement (e.g. green `#3FA34D` at hue 125° had a `class` token at
+  hue 5° = `#A34D3F`, a clear red). Now every token role maps to one
+  of seven in-family slots (`core`, `lighter`, `darker`, `much_lighter`,
+  `much_darker`, `ana_plus`, `ana_minus`) — all of which are derived
+  from the accent via `alaja lighten`/`darken` or analogous ±30°. No
+  token ever leaves its colour's hue family. Verified by hue-family
+  analysis on every theme:
+
+  ```
+  red       bg=N sel=R accent=R   tokens: keyword/string/func/class/param: R
+  green     bg=N sel=G accent=G   tokens: K=G S=C F=G C=G P=G            (cyan/blue are adjacent to green)
+  blue      bg=N sel=B accent=B   tokens: K=B S=P F=B C=B P=B            (purple is adjacent to blue)
+  purple    bg=N sel=P accent=P   tokens: K=P S=M F=P C=P P=P            (magenta is adjacent to purple)
+  gold      bg=N sel=O accent=O   tokens: K=O S=Y F=O C=O P=O            (yellow is adjacent to gold)
+  orange    bg=N sel=R accent=R   tokens: K=R S=O F=R C=R P=R
+  silver    bg=N sel=B accent=B   tokens: K=B S=B F=B C=B P=B            (grey-blue family)
+  ...
+  ```
+
+  No green theme has a red token. No blue theme has an orange token.
+  Every token stays within 30° of the accent's hue.
+
+- `Themixir.json` bumped to schema v4 with an optional `hue_shift_deg`
+  per colour (currently unused — kept for future tuning if needed).
+
 ## [2.0.1] — 2026-09-09
 
 ### Changed
