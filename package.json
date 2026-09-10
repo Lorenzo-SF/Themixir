@@ -2,7 +2,7 @@
   "name": "themixir-themes",
   "displayName": "Themixir! Elixir Themes for VS Code (and Cursor, and Antigravity, and all the folks)",
   "description": "A collection of 50 vibrant themes (10 colors \u00d7 5 variants) with WCAG-AA contrast, full workbench coverage and terminal ANSI 16.",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "publisher": "Lorenzo-SF",
   "repository": {
     "type": "git",

@@ -230,6 +230,47 @@ def _alpha(hex_color: str, alpha_hex: str) -> str:
     return "#" + hex_color.lstrip("#") + alpha_hex.upper()
 
 
+# Font-style policy:
+#
+#   Light themes: coloured tokens on a tinted light bg wash out unless
+#   they carry weight. We use BOLD for keyword / storage / function /
+#   class / type / parameter — they're the scopes the user reads
+#   every day, and bold makes the colour pop. Italic is reserved for
+#   things that should be visually soft (comments, deprecated).
+#
+#   Dark themes: a saturated accent + bold on every keyword reads as
+#   neon fever dream. Italic gives the keyword visual weight without
+#   stealing focus from the colour. `keyword.control` (if/for/while)
+#   keeps bold because those deserve emphasis.
+def _ts(role: str, is_light: bool) -> str | None:
+    if role in ("comment", "comment.line", "comment.block", "comment.documentation"):
+        return "italic"
+    if role in ("keyword.control", "entity.name.class", "entity.name.struct",
+                "markup.heading"):
+        return "bold"
+    if role in ("keyword", "storage", "storage.modifier"):
+        return "bold" if is_light else "italic"
+    if role in ("entity.name.function", "entity.name.type"):
+        return "bold" if is_light else None
+    if role in ("storage.type", "variable.parameter"):
+        return "bold" if is_light else "italic"
+    if role == "markup.bold":
+        return "bold"
+    if role == "markup.italic":
+        return "italic"
+    if role == "markup.underline":
+        return "underline"
+    if role == "markup.deleted":
+        return "strikethrough"
+    if role in ("entity.name.link",):
+        return "underline"
+    if role in ("emphasis.strong",):
+        return "bold"
+    if role in ("emphasis.italic",):
+        return "italic"
+    return None
+
+
 def _best_contrast_fg(against: str, candidates: list[str]) -> str:
     """Return the candidate with the best WCAG ratio against `against`."""
     best, best_ratio = candidates[0], wcag_ratio(candidates[0], against)
@@ -465,9 +506,19 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
         "titleBar.inactiveForeground": _alpha(fg, "50"),
 
         # ---- Activity bar ----
+        # In dark themes the default grey `fg` blends into the bg and the
+        # sidebar icons become invisible. We use `accent` so every icon is
+        # painted in the theme colour and clearly readable. Inactive icons
+        # are dimmed with alpha so the active one (slightly brightened)
+        # still stands out. In light themes the dark `fg` reads fine, so
+        # we keep it (accent would clash against the bright bg).
         "activityBar.background": bg,
-        "activityBar.foreground": fg,
-        "activityBar.inactiveForeground": _alpha(fg, "50"),
+        "activityBar.foreground": accent if not is_light else fg,
+        "activityBar.activeForeground": alaja_lighten(accent, 1) if not is_light
+                                         else accent,
+        "activityBar.inactiveForeground": (
+            _alpha(accent, "70") if not is_light else _alpha(fg, "50")
+        ),
         "activityBarBadge.background": accent,
         "activityBarBadge.foreground": activity_badge_fg,
 
@@ -820,158 +871,156 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
         "peekViewTitle.border": _alpha(fg, "20"),
     }
     colors.update(extra_colors)
+
     # ---- tokenColors ----
+    # Helper: build a settings dict, omitting fontStyle when None so
+    # the JSON stays clean and VSCode applies no style override.
+    def _s(role: str, color: str, *, force_style: str | None = None) -> dict:
+        style = force_style if force_style is not None else _ts(role, is_light)
+        out: dict = {"foreground": color}
+        if style:
+            out["fontStyle"] = style
+        return out
+
     token_colors = [
         # Comments
-        {"scope": "comment", "settings": {"foreground": tokens["comment"],
-                                          "fontStyle": "italic"}},
-        {"scope": "comment.line", "settings": {"foreground": tokens["comment"],
-                                               "fontStyle": "italic"}},
-        {"scope": "comment.block", "settings": {"foreground": tokens["comment"],
-                                                "fontStyle": "italic"}},
+        {"scope": "comment", "settings": _s("comment", tokens["comment"])},
+        {"scope": "comment.line", "settings": _s("comment.line", tokens["comment"])},
+        {"scope": "comment.block", "settings": _s("comment.block", tokens["comment"])},
         {"scope": "comment.documentation",
-         "settings": {"foreground": tokens["comment"], "fontStyle": "italic"}},
+         "settings": _s("comment.documentation", tokens["comment"])},
 
         # Strings
-        {"scope": "string", "settings": {"foreground": tokens["string"]}},
-        {"scope": "string.quoted", "settings": {"foreground": tokens["string"]}},
-        {"scope": "string.template", "settings": {"foreground": tokens["string"]}},
+        {"scope": "string", "settings": _s("string", tokens["string"])},
+        {"scope": "string.quoted", "settings": _s("string.quoted", tokens["string"])},
+        {"scope": "string.template",
+         "settings": _s("string.template", tokens["string"])},
         {"scope": "string.interpolated",
-         "settings": {"foreground": tokens["string"]}},
+         "settings": _s("string.interpolated", tokens["string"])},
         {"scope": "string.regexp",
-         "settings": {"foreground": tokens["string_regex"]}},
+         "settings": _s("string.regexp", tokens["string_regex"])},
 
         # Constants
         {"scope": "constant.numeric",
-         "settings": {"foreground": tokens["number"]}},
+         "settings": _s("constant.numeric", tokens["number"])},
         {"scope": "constant.character",
-         "settings": {"foreground": tokens["number"]}},
+         "settings": _s("constant.character", tokens["number"])},
         {"scope": "constant.character.escape",
-         "settings": {"foreground": tokens["constant_char_escape"]}},
+         "settings": _s("constant.character.escape", tokens["constant_char_escape"])},
         {"scope": "constant.language",
-         "settings": {"foreground": tokens["constant_lang"], "fontStyle": "italic"}},
+         "settings": _s("constant.language", tokens["constant_lang"])},
         {"scope": "variable.other.constant",
-         "settings": {"foreground": tokens["number"]}},
+         "settings": _s("variable.other.constant", tokens["number"])},
 
-        # Keywords / storage.
-        # `keyword` (generic) is italic only — avoids painting every
-        # grammar-assigned keyword in bold + saturated colour, which
-        # reads as "neon fever dream" against a coloured background.
-        # `keyword.control` (if/for/while/etc.) keeps bold because
-        # control flow keywords deserve visual weight.
-        {"scope": "keyword",
-         "settings": {"foreground": tokens["keyword"], "fontStyle": "italic"}},
+        # Keywords / storage
+        {"scope": "keyword", "settings": _s("keyword", tokens["keyword"])},
         {"scope": "keyword.control",
-         "settings": {"foreground": tokens["keyword"], "fontStyle": "bold"}},
+         "settings": _s("keyword.control", tokens["keyword"])},
         {"scope": "keyword.operator",
-         "settings": {"foreground": tokens["keyword"]}},
+         "settings": _s("keyword.operator", tokens["keyword"])},
         {"scope": "keyword.other",
-         "settings": {"foreground": tokens["keyword"]}},
-        {"scope": "storage",
-         "settings": {"foreground": tokens["keyword"]}},
+         "settings": _s("keyword.other", tokens["keyword"])},
+        {"scope": "storage", "settings": _s("storage", tokens["keyword"])},
         {"scope": "storage.modifier",
-         "settings": {"foreground": tokens["keyword"], "fontStyle": "italic"}},
+         "settings": _s("storage.modifier", tokens["keyword"])},
         {"scope": "storage.type",
-         "settings": {"foreground": tokens["type"], "fontStyle": "italic"}},
+         "settings": _s("storage.type", tokens["type"])},
 
-        # Entities. Functions are NOT bold — they're so frequent that
-        # bold + bright accent reads as visual noise. Class/struct
-        # names keep bold (rare, deserve weight).
+        # Entities
         {"scope": "entity.name.function",
-         "settings": {"foreground": tokens["function"]}},
+         "settings": _s("entity.name.function", tokens["function"])},
         {"scope": "entity.name.function.member",
-         "settings": {"foreground": tokens["function"]}},
+         "settings": _s("entity.name.function.member", tokens["function"])},
         {"scope": "entity.name.class",
-         "settings": {"foreground": tokens["class"], "fontStyle": "bold"}},
+         "settings": _s("entity.name.class", tokens["class"])},
         {"scope": "entity.name.struct",
-         "settings": {"foreground": tokens["class"], "fontStyle": "bold"}},
+         "settings": _s("entity.name.struct", tokens["class"])},
         {"scope": "entity.name.type",
-         "settings": {"foreground": tokens["type"]}},
+         "settings": _s("entity.name.type", tokens["type"])},
         {"scope": "entity.name.tag",
-         "settings": {"foreground": tokens["keyword"]}},
+         "settings": _s("entity.name.tag", tokens["keyword"])},
         {"scope": "entity.other.attribute-name",
-         "settings": {"foreground": tokens["parameter"]}},
+         "settings": _s("entity.other.attribute-name", tokens["parameter"])},
 
         # Support
         {"scope": "support.function",
-         "settings": {"foreground": tokens["function"]}},
+         "settings": _s("support.function", tokens["function"])},
         {"scope": "support.class",
-         "settings": {"foreground": tokens["class"]}},
+         "settings": _s("support.class", tokens["class"])},
         {"scope": "support.type",
-         "settings": {"foreground": tokens["type"]}},
+         "settings": _s("support.type", tokens["type"])},
         {"scope": "support.constant",
-         "settings": {"foreground": tokens["type"]}},
+         "settings": _s("support.constant", tokens["type"])},
         {"scope": "support.variable",
-         "settings": {"foreground": tokens["type"]}},
+         "settings": _s("support.variable", tokens["type"])},
 
         # Variables
-        {"scope": "variable", "settings": {"foreground": fg}},
-        {"scope": "variable.other.readwrite", "settings": {"foreground": fg}},
+        {"scope": "variable", "settings": _s("variable", fg)},
+        {"scope": "variable.other.readwrite",
+         "settings": _s("variable.other.readwrite", fg)},
         {"scope": "variable.parameter",
-         "settings": {"foreground": tokens["parameter"], "fontStyle": "italic"}},
+         "settings": _s("variable.parameter", tokens["parameter"])},
         {"scope": "variable.other.property",
-         "settings": {"foreground": tokens["property"]}},
+         "settings": _s("variable.other.property", tokens["property"])},
 
         # Punctuation
-        {"scope": "punctuation",
-         "settings": {"foreground": _alpha(fg, "B0")}},
+        {"scope": "punctuation", "settings": _s("punctuation", _alpha(fg, "B0"))},
         {"scope": "punctuation.definition.string",
-         "settings": {"foreground": tokens["string"]}},
+         "settings": _s("punctuation.definition.string", tokens["string"])},
         {"scope": "punctuation.definition.comment",
-         "settings": {"foreground": tokens["comment"]}},
+         "settings": _s("punctuation.definition.comment", tokens["comment"])},
         {"scope": "punctuation.definition.tag",
-         "settings": {"foreground": tokens["keyword"]}},
+         "settings": _s("punctuation.definition.tag", tokens["keyword"])},
         {"scope": "punctuation.separator",
-         "settings": {"foreground": _alpha(fg, "B0")}},
+         "settings": _s("punctuation.separator", _alpha(fg, "B0"))},
 
         # NOTE: `invalid` / `invalid.deprecated` / `invalid.illegal`
-        # are intentionally NOT overridden. VSCode's default
-        # rendering for these scopes is the squiggly red underline
-        # that signals a syntax error. Painting it with the theme
-        # accent (especially in bold + underline) was creating
-        # false-positive "everything is an error" appearances and
-        # also stealing the canonical red error marker from real
-        # issues. We let VSCode handle these.
+        # are intentionally NOT overridden. VSCode's default rendering
+        # for these scopes is the squiggly red underline that signals
+        # a syntax error. Painting it with the theme accent (especially
+        # in bold + underline) was creating false-positive "everything
+        # is an error" appearances and also stealing the canonical red
+        # error marker from real issues. We let VSCode handle these.
 
         # Markup
         {"scope": "markup.heading",
-         "settings": {"foreground": tokens["keyword"], "fontStyle": "bold"}},
+         "settings": _s("markup.heading", tokens["keyword"])},
         {"scope": "markup.bold",
-         "settings": {"foreground": fg, "fontStyle": "bold"}},
+         "settings": _s("markup.bold", fg)},
         {"scope": "markup.italic",
-         "settings": {"foreground": fg, "fontStyle": "italic"}},
+         "settings": _s("markup.italic", fg)},
         {"scope": "markup.underline",
-         "settings": {"foreground": fg, "fontStyle": "underline"}},
+         "settings": _s("markup.underline", fg)},
         {"scope": "markup.inline.raw",
-         "settings": {"foreground": tokens["number"]}},
+         "settings": _s("markup.inline.raw", tokens["number"])},
         {"scope": "markup.list.unnumbered",
-         "settings": {"foreground": tokens["parameter"]}},
+         "settings": _s("markup.list.unnumbered", tokens["parameter"])},
         {"scope": "markup.list.numbered",
-         "settings": {"foreground": tokens["parameter"]}},
+         "settings": _s("markup.list.numbered", tokens["parameter"])},
         {"scope": "markup.quote",
-         "settings": {"foreground": tokens["comment"], "fontStyle": "italic"}},
+         "settings": _s("markup.quote", tokens["comment"])},
         {"scope": "markup.deleted",
-         "settings": {"foreground": tokens["keyword"], "fontStyle": "strikethrough"}},
+         "settings": _s("markup.deleted", tokens["keyword"])},
         {"scope": "markup.inserted",
-         "settings": {"foreground": tokens["function"]}},
+         "settings": _s("markup.inserted", tokens["function"])},
         {"scope": "markup.changed",
-         "settings": {"foreground": tokens["type"]}},
+         "settings": _s("markup.changed", tokens["type"])},
 
         # Meta / diff
         {"scope": "meta.diff",
-         "settings": {"foreground": tokens["parameter"]}},
+         "settings": _s("meta.diff", tokens["parameter"])},
         {"scope": "meta.diff.header",
-         "settings": {"foreground": tokens["keyword"]}},
+         "settings": _s("meta.diff.header", tokens["keyword"])},
         {"scope": "meta.range",
-         "settings": {"foreground": tokens["type"]}},
+         "settings": _s("meta.range", tokens["type"])},
 
         # Emphasis
         {"scope": "emphasis.strong",
-         "settings": {"foreground": fg, "fontStyle": "bold"}},
+         "settings": _s("emphasis.strong", fg)},
         {"scope": "emphasis.italic",
-         "settings": {"foreground": fg, "fontStyle": "italic"}},
+         "settings": _s("emphasis.italic", fg)},
         {"scope": "entity.name.link",
-         "settings": {"foreground": tokens["string"], "fontStyle": "underline"}},
+         "settings": _s("entity.name.link", tokens["string"])},
     ]
 
     display_name = f"Themixir {color_name.capitalize()}{DISPLAY_SUFFIX[variant]}"

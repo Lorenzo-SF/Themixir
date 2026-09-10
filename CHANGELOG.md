@@ -12,6 +12,31 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 > - **patch**: tweaks to existing palettes, contrast fixes, added workbench
 >   colour coverage. No new themes.
 
+## [2.0.2] — 2026-09-09
+
+### Changed
+
+- **Activity bar icons are now visible.** In dark and solarized_dark
+  variants the sidebar icons used to be grey (`fg` = `#D4D4D4` /
+  `#93A1A1`) which almost disappeared against the tinted bg. They
+  now use `accent` for the foreground so each theme's icons are
+  painted in the theme's own colour. The active icon is one shade
+  brighter and the inactive ones are dimmed with alpha, so the
+  hierarchy still reads. Light / solarized / normal variants keep
+  `fg` (dark text on light bg reads fine there).
+
+- **Tokens are bold in light themes, italic in dark themes.** The
+  user reported that in light variants the colours washed out and
+  the typography was so thin that "you can't tell the colours
+  apart". Light themes now use `bold` for `keyword`, `keyword.control`,
+  `storage`, `storage.modifier`, `entity.name.function`,
+  `entity.name.class`, `entity.name.type`, `storage.type`,
+  `variable.parameter` so the colour carries weight on a tinted
+  light bg. Dark themes keep the previous `italic` for keyword /
+  storage to avoid the "everything is bold neon" effect against
+  a coloured background. Implemented via a `_ts(role, is_light)`
+  helper that the rest of the script uses.
+
 ## [2.0.1] — 2026-09-09
 
 > Four bug-fix passes the maintainer wanted to bundle into a single
@@ -263,6 +288,7 @@ copper_dark    #37220F   magenta_dark   #46091E
   function, entity.name.class, entity.name.type, variable,
   variable.parameter, variable.other.property, punctuation.
 
+[2.0.2]: https://github.com/lorenzo-sf/themixir/releases/tag/v2.0.2
 [2.0.1]: https://github.com/lorenzo-sf/themixir/releases/tag/v2.0.1
 [2.0.0]: https://github.com/lorenzo-sf/themixir/releases/tag/v2.0.0
 [1.0.2]: https://github.com/lorenzo-sf/themixir/releases/tag/v1.0.2

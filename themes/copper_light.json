@@ -75,6 +75,7 @@
     "titleBar.inactiveForeground": "#37220F50",
     "activityBar.background": "#EAD5C2",
     "activityBar.foreground": "#37220F",
+    "activityBar.activeForeground": "#8A4F1C",
     "activityBar.inactiveForeground": "#37220F50",
     "activityBarBadge.background": "#8A4F1C",
     "activityBarBadge.foreground": "#EAD5C2",
@@ -412,8 +413,7 @@
     {
       "scope": "constant.language",
       "settings": {
-        "foreground": "#8A1C20",
-        "fontStyle": "italic"
+        "foreground": "#8A1C20"
       }
     },
     {
@@ -426,7 +426,7 @@
       "scope": "keyword",
       "settings": {
         "foreground": "#684F3A",
-        "fontStyle": "italic"
+        "fontStyle": "bold"
       }
     },
     {
@@ -451,27 +451,29 @@
     {
       "scope": "storage",
       "settings": {
-        "foreground": "#684F3A"
+        "foreground": "#684F3A",
+        "fontStyle": "bold"
       }
     },
     {
       "scope": "storage.modifier",
       "settings": {
         "foreground": "#684F3A",
-        "fontStyle": "italic"
+        "fontStyle": "bold"
       }
     },
     {
       "scope": "storage.type",
       "settings": {
         "foreground": "#613714",
-        "fontStyle": "italic"
+        "fontStyle": "bold"
       }
     },
     {
       "scope": "entity.name.function",
       "settings": {
-        "foreground": "#8A1C20"
+        "foreground": "#8A1C20",
+        "fontStyle": "bold"
       }
     },
     {
@@ -497,7 +499,8 @@
     {
       "scope": "entity.name.type",
       "settings": {
-        "foreground": "#613714"
+        "foreground": "#613714",
+        "fontStyle": "bold"
       }
     },
     {
@@ -558,7 +561,7 @@
       "scope": "variable.parameter",
       "settings": {
         "foreground": "#684F3A",
-        "fontStyle": "italic"
+        "fontStyle": "bold"
       }
     },
     {
@@ -646,8 +649,7 @@
     {
       "scope": "markup.quote",
       "settings": {
-        "foreground": "#37200B",
-        "fontStyle": "italic"
+        "foreground": "#37200B"
       }
     },
     {

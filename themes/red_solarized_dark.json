@@ -74,8 +74,9 @@
     "titleBar.inactiveBackground": "#002731",
     "titleBar.inactiveForeground": "#93A1A150",
     "activityBar.background": "#002B36",
-    "activityBar.foreground": "#93A1A1",
-    "activityBar.inactiveForeground": "#93A1A150",
+    "activityBar.foreground": "#D57780",
+    "activityBar.activeForeground": "#D9858D",
+    "activityBar.inactiveForeground": "#D5778070",
     "activityBarBadge.background": "#D57780",
     "activityBarBadge.foreground": "#002B36",
     "sideBar.background": "#002731",
@@ -412,8 +413,7 @@
     {
       "scope": "constant.language",
       "settings": {
-        "foreground": "#D577AF",
-        "fontStyle": "italic"
+        "foreground": "#D577AF"
       }
     },
     {
@@ -451,7 +451,8 @@
     {
       "scope": "storage",
       "settings": {
-        "foreground": "#E2A0A6"
+        "foreground": "#E2A0A6",
+        "fontStyle": "italic"
       }
     },
     {
@@ -646,8 +647,7 @@
     {
       "scope": "markup.quote",
       "settings": {
-        "foreground": "#886E70",
-        "fontStyle": "italic"
+        "foreground": "#886E70"
       }
     },
     {
