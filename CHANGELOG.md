@@ -14,9 +14,11 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.0.1] — 2026-09-09
 
-> Two bug-fix passes that the maintainer wanted to bundle into a single
+> Three bug-fix passes the maintainer wanted to bundle into a single
 > `2.0.1` release. The first pass fixed bg variants; the second pass
-> fixed token hue family. Both ship together as `2.0.1`.
+> fixed token hue family; the third pass plugged workbench colour
+> defaults that were leaking VSCode's red error markers into the UI.
+> All three ship together as `2.0.1`.
 
 ### Fixed
 
@@ -44,6 +46,29 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
   No green theme has a red token. No blue theme has an orange token.
   Every token stays within 30° of the accent's hue.
+
+- **Fixed workbench-colour defaults leaking red.** The previous
+  2.0.0 release defined ~290 workbench colour keys but left many
+  slots unspecified. VSCode's defaults for those slots include red
+  error markers (`editorLineNumber.errorForeground`,
+  `editorLineNumber.breakpointForeground`,
+  `problemsErrorIcon.foreground`), notification button colours, debug
+  toolbar, activity-bar active states, breadcrumb focus, tab hover,
+  editor group header, etc. Whenever the user opened a non-Red theme
+  they saw red in: the activity-bar icons' active border, the line
+  numbers of error/breakpoint lines, the breadcrumb focus border,
+  the editor group header tabs, the debug toolbar arrows, the
+  "Accept" button in the notification popups. 2.0.1 now overrides
+  every slot we could find so no element inherits the system red.
+
+- **Terminal ANSI 16 is now a universal palette, not derived from the
+  theme accent.** The previous implementation mapped `ansiGreen` to
+  the accent's triad +120°, which for a Blue theme at hue 210° lands
+  at hue 330° = magenta. So in a Blue theme, `ls --color`, `git log`
+  etc. rendered filenames in magenta, not green. 2.0.1 uses a fixed
+  palette (One Dark for dark themes, Solarized for light themes)
+  that lightens or darkens based on bg. The user always sees
+  green/blue/red/cyan/magenta/yellow as expected.
 
 - **Each colour has a strong, distinct background tint.** The previous
   2.0.0 release shipped hardcoded tinted bg/fg pairs that were

@@ -708,50 +708,109 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
         "terminal.dropBackground": _alpha(sel, "30"),
     }
 
-    # ---- Terminal ANSI 16 (consistent across variants of a colour) ----
-    # We build the ANSI palette from the accent + its alaja harmonies,
-    # so light/dark/normal of the same colour share the same ANSI identity.
-    ansi_palette = alaja_harmony(accent, "triad")  # [accent, +120, +240]
-    ansi_comp = alaja_harmony(accent, "complementary")[1]
-    ansi_split = alaja_harmony(accent, "split_complementary")
-    ansi_ana = alaja_harmony(accent, "analogous")
+    # ---- Previously missing workbench colors (vscode defaults are red) ----
+    # The user reported that error/warning markers (default red in VSCode)
+    # leaked into many UI slots because we didn't override the defaults.
+    # We now provide a complete override so no slot inherits the system red.
+    extra_colors = {
+        # Activity bar: focus / active states
+        "activityBar.activeBackground": bg,
+        "activityBar.activeBorder": accent,
+        "activityBar.activeFocusBorder": accent,
+        "activityBar.dropBackground": _alpha(sel, "30"),
+        "activityBarBadge.foreground": activity_badge_fg,
 
-    # Black = darkest, White = lightest, mapped from bg/fg.
-    ansi_black = alaja_darken(bg, 4) if not is_light else "#000000"
-    ansi_white = fg
-    ansi_bright_black = alaja_lighten(ansi_black, 2)
-    ansi_bright_white = alaja_lighten(fg, 1) if not is_light else alaja_darken(fg, 1)
+        # Editor line numbers: error/warning/info/breakpoint markers
+        "editorLineNumber.errorForeground": sel,
+        "editorLineNumber.warningForeground": tokens["type"],
+        "editorLineNumber.infoForeground": tokens["function"],
+        "editorLineNumber.breakpointForeground": sel,
+        "editorCursor.background": bg,
 
-    # Map: red, green, yellow, blue, magenta, cyan
-    ansi_red = sel
-    ansi_green = ansi_palette[1]      # triad +120°
-    ansi_yellow = ansi_ana[2]         # analogous +30°
-    ansi_blue = ansi_palette[2]       # triad +240°
-    ansi_magenta = ansi_split[1]      # split +150°
-    ansi_cyan = ansi_comp              # complementary
+        # Breadcrumbs: focus state and active (hovered) state
+        "breadcrumb.activeForeground": accent,
+        "breadcrumbPicker.foreground": fg,
+        "breadcrumbPicker.focusForeground": accent,
 
-    def _bright(c: str) -> str:
-        return alaja_lighten(c, 2) if not is_light else alaja_darken(c, 2)
+        # Tabs: hover, unfocused hover, modified borders
+        "tab.hoverBackground": _alpha(accent, "15"),
+        "tab.hoverBorder": accent,
+        "tab.unfocusedHoverBackground": _alpha(accent, "10"),
+        "tab.unfocusedActiveBorder": accent,
+        "tab.unfocusedActiveBorderTop": accent,
+        "tab.activeModifiedBorder": sel,
+        "tab.inactiveModifiedBorder": _alpha(sel, "50"),
+        "tab.lastPinnedBorder": _alpha(fg, "20"),
 
-    colors.update({
-        "terminal.ansiBlack": ansi_black,
-        "terminal.ansiRed": ansi_red,
-        "terminal.ansiGreen": ansi_green,
-        "terminal.ansiYellow": ansi_yellow,
-        "terminal.ansiBlue": ansi_blue,
-        "terminal.ansiMagenta": ansi_magenta,
-        "terminal.ansiCyan": ansi_cyan,
-        "terminal.ansiWhite": ansi_white,
-        "terminal.ansiBrightBlack": ansi_bright_black,
-        "terminal.ansiBrightRed": _bright(ansi_red),
-        "terminal.ansiBrightGreen": _bright(ansi_green),
-        "terminal.ansiBrightYellow": _bright(ansi_yellow),
-        "terminal.ansiBrightBlue": _bright(ansi_blue),
-        "terminal.ansiBrightMagenta": _bright(ansi_magenta),
-        "terminal.ansiBrightCyan": _bright(ansi_cyan),
-        "terminal.ansiBrightWhite": ansi_bright_white,
-    })
+        # Editor group header
+        "editorGroup.background": bg,
+        "editorGroupHeader.background": bg,
+        "editorGroupHeader.tabsBackground": bg,
+        "editorGroupHeader.tabsBorder": _alpha(fg, "10"),
+        "editorGroupHeader.noTabsBackground": bg,
+        "editorGroupHeader.dropBackground": _alpha(sel, "30"),
+        "editorGroup.emptyBackground": bg,
 
+        # Debug toolbar (the arrows delante/detrás)
+        "debugToolBar.background": bg,
+        "debugToolBar.border": _alpha(fg, "20"),
+
+        # Notification buttons (the "aceptar" button)
+        "notification.buttonBackground": accent,
+        "notification.buttonForeground": activity_badge_fg,
+        "notification.buttonHoverBackground": alaja_lighten(accent, 1) if not is_light
+                                            else alaja_darken(accent, 1),
+        "notification.buttonBorder": accent,
+        "notification.centerBorder": _alpha(fg, "20"),
+        "notificationToast.background": sidebar_bg,
+        "notificationToast.border": _alpha(fg, "30"),
+        "notificationToast.foreground": fg,
+        "notificationLink.activeForeground": sel,
+
+        # Problems panel icons
+        "problemsErrorIcon.foreground": sel,
+        "problemsWarningIcon.foreground": tokens["type"],
+        "problemsInfoIcon.foreground": tokens["function"],
+
+        # Side bar sections
+        "sideBar.dropBackground": _alpha(sel, "30"),
+
+        # List focus indicators
+        "list.filterMatchBackground": _alpha(sel, "40"),
+        "list.filterMatchBorder": sel,
+        "list.invalidItemForeground": sel,
+        "list.errorForeground": sel,
+        "list.warningForeground": tokens["type"],
+
+        # Panel
+        "panel.dropBackground": _alpha(sel, "30"),
+
+        # Inputs
+        "inputOption.hoverBorder": _alpha(accent, "50"),
+
+        # Status bar debug / nofolder
+        "statusBar.debuggingForeground": activity_badge_fg,
+
+        # Window borders
+        "window.activeBorder": accent,
+        "window.inactiveBorder": _alpha(fg, "20"),
+
+        # Find match borders
+        "editor.findMatchHighlightBorder": _alpha(sel, "50"),
+
+        # Chart specific shades
+        "charts.red": sel,
+        "charts.blue": tokens["function"],
+        "charts.green": tokens["function"],
+        "charts.yellow": tokens["type"],
+        "charts.orange": tokens["type"],
+        "charts.purple": accent,
+        "charts.lines": _alpha(fg, "30"),
+
+        # Peek view borders
+        "peekViewTitle.border": _alpha(fg, "20"),
+    }
+    colors.update(extra_colors)
     # ---- tokenColors ----
     token_colors = [
         # Comments
