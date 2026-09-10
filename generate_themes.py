@@ -506,19 +506,16 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
         "titleBar.inactiveForeground": _alpha(fg, "50"),
 
         # ---- Activity bar ----
-        # In dark themes the default grey `fg` blends into the bg and the
-        # sidebar icons become invisible. We use `accent` so every icon is
-        # painted in the theme colour and clearly readable. Inactive icons
-        # are dimmed with alpha so the active one (slightly brightened)
-        # still stands out. In light themes the dark `fg` reads fine, so
-        # we keep it (accent would clash against the bright bg).
+        # Every theme variant uses `accent` for the activity-bar icons so
+        # the explorer / search / git / extensions buttons are visible
+        # and clearly identify the theme colour. The active icon is one
+        # shade brighter; inactive icons are dimmed with alpha so the
+        # active one still stands out.
         "activityBar.background": bg,
-        "activityBar.foreground": accent if not is_light else fg,
+        "activityBar.foreground": accent,
         "activityBar.activeForeground": alaja_lighten(accent, 1) if not is_light
-                                         else accent,
-        "activityBar.inactiveForeground": (
-            _alpha(accent, "70") if not is_light else _alpha(fg, "50")
-        ),
+                                         else alaja_darken(accent, 1),
+        "activityBar.inactiveForeground": _alpha(accent, "60"),
         "activityBarBadge.background": accent,
         "activityBarBadge.foreground": activity_badge_fg,
 

@@ -76,7 +76,7 @@
     "activityBar.background": "#002B36",
     "activityBar.foreground": "#329AAC",
     "activityBar.activeForeground": "#47A4B4",
-    "activityBar.inactiveForeground": "#329AAC70",
+    "activityBar.inactiveForeground": "#329AAC60",
     "activityBarBadge.background": "#329AAC",
     "activityBarBadge.foreground": "#002B36",
     "sideBar.background": "#002731",

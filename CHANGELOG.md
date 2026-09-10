@@ -16,14 +16,19 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- **Activity bar icons are now visible.** In dark and solarized_dark
-  variants the sidebar icons used to be grey (`fg` = `#D4D4D4` /
-  `#93A1A1`) which almost disappeared against the tinted bg. They
-  now use `accent` for the foreground so each theme's icons are
-  painted in the theme's own colour. The active icon is one shade
-  brighter and the inactive ones are dimmed with alpha, so the
-  hierarchy still reads. Light / solarized / normal variants keep
-  `fg` (dark text on light bg reads fine there).
+- **Activity bar icons are now visible in every variant.** The 2.0.2
+  first pass only switched the icon colour for dark and solarized_dark
+  variants. The user reported that light / solarized / normal were
+  also unreadable, with the explorer/search/git/extensions buttons
+  in dim grey. Every variant now uses `accent` for
+  `activityBar.foreground` so the theme colour is always present in
+  the sidebar. The active icon is brightened (dark) / darkened
+  (light) for hierarchy, inactive icons are dimmed with alpha.
+
+> Note on VSCode icon behaviour: some built-in activity-bar icons
+> (notably the Git and Debug icons) are rendered as full-colour
+> SVGs that ignore the colour theme's `foreground` value. This is
+> a VSCode limitation, not a theme bug.
 
 - **Tokens are bold in light themes, italic in dark themes.** The
   user reported that in light variants the colours washed out and
