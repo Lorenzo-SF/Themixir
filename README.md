@@ -1,103 +1,94 @@
-# Themixir! Elixir Themes for VS Code (and Cursor, and Antigravity, and all the folks)
+# Themixir
 
-A collection of **50 vibrant themes** for your favourite IDE, built on
-custom palettes with WCAG-AA contrast, full workbench coverage (terminal
-ANSI 16, git decorations, bracket/find/hover widgets, etc.), and
-syntax highlighting tuned for readability.
+50 themes for VS Code, Cursor, Antigravity, Windsurf, etc.
 
-Powered by [Alaja](https://github.com/lorenzo-sf/alaja) for colour
-harmonies and validated against WCAG 2.1 contrast ratios.
+10 colours × 5 variants. WCAG-AA contrast. In-family token palette.
+Universal green/red for git diffs.
 
-## Features
+## Quick start
 
-- **10 Core Colours**: Red, Green, Blue, Purple, Orange, Light Blue, Gold,
-  Silver, Copper, Magenta.
-- **5 Variants per Colour**:
-  - **Solarized** — crisp light Solarized-style base, low saturation.
-  - **Light** — clear light backgrounds with a strong tint of the colour.
-  - **Normal** — neutral dark background (`#1E1E1E`), perfect for users who
-    want a dark theme that doesn't tint the whole workbench.
-  - **Dark** — saturated dark background with the colour family.
-  - **Solarized Dark** — Solarized Dark-style base (`#002B36`).
-- **Full workbench coverage**: ~330 colour keys per theme — editor, terminal
-  ANSI 16, git decorations, bracket match, find match, peek view, diff
-  editor, merge, notifications, widgets, settings, breadcrumb, debug
-  toolbar, notification buttons, etc.
-- **In-family token palette**: every token colour stays inside the colour's
-  own hue family. A green theme never has red/magenta tokens; a blue theme
-  never has orange tokens. Tokens are derived from the accent via `alaja`
-  lighten/darken and analogous ±30° — no complements, no triad.
-- **WCAG-AA contrast**: editor foreground vs background, keyword vs
-  background, status bar, activity badge, and other UI components all pass
-  ≥4.5. Critical token scopes (strings, keywords, numbers, storage) pass
-  ≥4.5; decorative scopes (comments, function names, etc.) pass ≥3.0.
-- **Universal terminal ANSI 16**: `ansiGreen` is always green, `ansiBlue`
-  always blue, regardless of theme. Light/dark variants use One Dark
-  and Solarized palettes respectively.
-- **No VSCode red defaults leaking**: error/warning/breakpoint markers
-  on line numbers, problems panel, debug toolbar, and notification
-  buttons are all themed — none inherit the system red.
+1. Install from the VS Code Marketplace (`Cmd+Shift+X` / `Ctrl+Shift+X`,
+   search "Themixir Themes").
+2. Pick a theme: `Cmd+K Cmd+T` / `Ctrl+K Ctrl+T` → any "Themixir …"
+   variant.
+3. Optionally configure fonts (see [Recommended settings](#recommended-settings)).
 
-## Installation
+## Variants
 
-1. Open **Extensions** in your favourite IDE (`Cmd+Shift+X` / `Ctrl+Shift+X`).
-2. Search for **Themixir Themes**.
-3. Click **Install**.
-4. Select your preferred variant with `Cmd+K Cmd+T` / `Ctrl+K Ctrl+T`.
+For every colour:
+
+| Variant | Background |
+|---|---|
+| Solarized | Fixed `#FDF6E3` (Solarized Light base, no theme tint) |
+| Light | Tinted from the colour's `selection` (e.g. red → `#F8C4C8`) |
+| Normal | Neutral `#1E1E1E` grey |
+| Dark | Tinted from the colour's `selection` (e.g. red → `#451115`) |
+| Solarized Dark | Fixed `#002B36` (Solarized Dark base) |
+
+10 colours: **red · green · blue · purple · orange · light_blue · gold ·
+silver · copper · magenta**.
+
+## Recommended settings
+
+The themes do not pin a font (that's your choice). However, on light
+backgrounds coloured tokens can wash out unless the typography has some
+weight. The recommended combination is:
+
+```jsonc
+// settings.json (User)
+{
+  "editor.fontFamily": "'Cascadia Code'",
+  "editor.fontWeight": "500",
+  "editor.fontLigatures": true
+}
+```
+
+> You can override any of these. If you prefer Fira Code, JetBrains
+> Mono, your own handwriting font — just set `editor.fontFamily` to it
+> and the theme will keep working.
+
+## Git diff colours
+
+Git diffs (`gitDecoration.*`, `diffEditor.*`, `merge.*`) always show
+**green for added / red for removed** — regardless of which colour
+theme you picked. This mirrors the universal convention (GitHub,
+GitLab, etc.) so your eye doesn't have to relearn what red/green mean
+when you switch themes. The tones shift slightly between light and
+dark variants (darker on light bgs for AA contrast, brighter on dark)
+but the meaning stays the same.
+
+## Accessibility
+
+All 50 themes pass WCAG 2.1:
+
+- `editor.foreground` vs `editor.background` ≥ 4.5 (AA normal text)
+- `statusBar`, `activityBarBadge` foreground/background ≥ 4.5
+- `accent` (keyword) vs background ≥ 4.5
+- Critical token scopes (string, keyword, num, storage, constant) ≥ 4.5
+- Decorative scopes (comment, function, class, type, etc.) ≥ 3.0
 
 ## Development
 
 ### Theme generation
 
-The source of truth is `Themixir.json` (10 palettes × schema v3/v4).
-Each palette declares only `selection` (vibrant base) and `accent`
-(darker derivative). The generator script `generate_themes.py`
-produces all 50 theme JSONs under `themes/` and rewrites the
-`contributes.themes` array in `package.json`.
-
 ```bash
 python3 generate_themes.py
 ```
 
-The script:
+Reads `Themixir.json` (10 palettes, schema v3/v4), writes 50 themes
+to `themes/`, updates `package.json`. Pure Python (HSL math) for
+harmonies + alaja for darken/lighten/contrast validation. Cached
+per-(cmd) — full regeneration takes ~3 minutes.
 
-- Derives **bg/fg** for each of the 5 variants via `alaja lighten/darken`
-  on the selection colour (the light/dark variants have strong colour
-  tints, the solarized/solarized_dark variants use the fixed Solarized
-  base palette, and the normal variant is neutral grey).
-- Builds an **in-family token palette** of 7 slots (`core`, `lighter`,
-  `darker`, `much_lighter`, `much_darker`, `ana_plus`, `ana_minus`)
-  all derived from the accent. Every token role maps to one slot.
-- Uses a **universal terminal ANSI 16** palette (One Dark / Solarized)
-  so `ansiGreen` always means green, never the theme's complement.
-- **Auto-fixes WCAG** ratios with both `lighten` and `darken` until
-  foreground crosses ≥4.5 (critical tokens) or ≥3.0 (decorative).
-- Overrides **~330 workbench colour keys** so no slot inherits VSCode's
-  red defaults (line-number errors, problems panel icons, debug
-  toolbar, notification buttons, etc.).
-- Updates `package.json` only — leaves every other field untouched.
+### Adding a colour or variant
 
-### Packaging and publishing
+Edit `Themixir.json`. Each palette declares `selection` and `accent`.
+Re-run the generator. The new theme lands in the file list in
+`package.json` automatically.
 
-See [`docs/PUBLISHING.md`](docs/PUBLISHING.md) for the full workflow. TL;DR:
+### Publishing
 
-```bash
-# One-time
-npm install -g @vscode/vsce
-vsce login Lorenzo-SF
-
-# Release
-./scripts/release.sh patch   # or minor / major
-vsce publish
-
-# Optional: pre-build a .vsix to inspect
-vsce package
-```
-
-### Current version
-
-The latest release is **2.0.1**. See [`CHANGELOG.md`](CHANGELOG.md) for
-the full history.
+See [`docs/PUBLISHING.md`](docs/PUBLISHING.md).
 
 ## License
 

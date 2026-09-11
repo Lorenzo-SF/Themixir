@@ -12,6 +12,34 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 > - **patch**: tweaks to existing palettes, contrast fixes, added workbench
 >   colour coverage. No new themes.
 
+## [2.0.3] — 2026-09-09
+
+### Changed
+
+- **Git diff colours are now universal — green for added, red for
+  removed, in every theme.** Previously `gitDecoration.*`,
+  `diffEditor.*`, `merge.*` were derived from each theme's colour
+  family: a Blue theme's `gitDecoration.deletedResourceForeground`
+  could land on a complement purple/red that had nothing to do with
+  "deleted". The user pointed out that reading a diff shouldn't
+  require relearning what green/red mean every time you change
+  theme. 2.0.3 uses fixed pairs:
+    - Light variants: added=`#116329`, deleted=`#A40E26`,
+      modified=`#6F4F00` (darker tones that pass WCAG-AA even on
+      heavily tinted light bgs like purple-light `#E1CDE9`).
+    - Dark variants: added=`#3FB950`, deleted=`#FF7B7B`,
+      modified=`#D29922` (the salmon deleted was bumped from
+      `#F85149` because that one dropped to 3.68 on gold-dark
+      `#463107`).
+  All 50 themes pass WCAG-AA on every diff colour.
+
+- **README rewritten for clarity.** Shorter. Adds a
+  "Recommended settings" section with the Cascadia Code / weight
+  500 / font ligatures recipe (the user can override any of those).
+  Adds a "Git diff colours" section that explains the universal
+  green/red convention. Removes the long "How the generator works"
+  explanation (moved to a comment in `generate_themes.py`).
+
 ## [2.0.2] — 2026-09-09
 
 ### Changed
@@ -293,6 +321,7 @@ copper_dark    #37220F   magenta_dark   #46091E
   function, entity.name.class, entity.name.type, variable,
   variable.parameter, variable.other.property, punctuation.
 
+[2.0.3]: https://github.com/lorenzo-sf/themixir/releases/tag/v2.0.3
 [2.0.2]: https://github.com/lorenzo-sf/themixir/releases/tag/v2.0.2
 [2.0.1]: https://github.com/lorenzo-sf/themixir/releases/tag/v2.0.1
 [2.0.0]: https://github.com/lorenzo-sf/themixir/releases/tag/v2.0.0

@@ -57,6 +57,21 @@ SOLARIZED_DARK_FG = "#93A1A1"
 NORMAL_BG = "#1E1E1E"
 NORMAL_FG = "#D4D4D4"
 
+# UNIVERSAL git / diff colours. Green for added / inserted, red for
+# deleted / removed — regardless of the theme's own colour family.
+# Reasoning: when you read a diff, your eye expects "green = new" and
+# "red = gone" instantly. Mapping it to the theme's analogous green
+# or complementary red breaks that muscle memory. The light variants
+# use darker green/red so they pass WCAG-AA even on the most tinted
+# light backgrounds (purple-light at L=88%, gold-light at L=92%).
+# Verified ≥4.5 against every variant's editor.background.
+GIT_ADDED_LIGHT    = "#116329"   # GitHub dark green
+GIT_ADDED_DARK     = "#3FB950"   # GitHub dark-mode green
+GIT_DELETED_LIGHT  = "#A40E26"   # GitHub dark red
+GIT_DELETED_DARK   = "#FF7B7B"   # bright salmon, passes AA even on gold/copper/silver dark bgs
+GIT_MODIFIED_LIGHT = "#6F4F00"   # dark amber, passes AA on every bg
+GIT_MODIFIED_DARK  = "#D29922"   # GitHub dark-mode amber
+
 # Alaja steps used for `lighten`/`darken` to produce tinted bgs. 1..10.
 LIGHTEN_STEPS = 7
 DARKEN_STEPS = 7
@@ -429,6 +444,12 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
 
     sel = selection
 
+    # Universal git/diff colours picked BEFORE the colors dict so we can
+    # reference them in the dict literal.
+    git_added    = GIT_ADDED_LIGHT   if is_light else GIT_ADDED_DARK
+    git_deleted  = GIT_DELETED_LIGHT if is_light else GIT_DELETED_DARK
+    git_modified = GIT_MODIFIED_LIGHT if is_light else GIT_MODIFIED_DARK
+
     colors = {
         # ---- Editor core ----
         "editor.background": bg,
@@ -684,31 +705,37 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
         "peekViewTitleDescription.foreground": _alpha(fg, "60"),
         "peekViewTitleLabel.foreground": accent,
 
-        # ---- Diff editor ----
+        # ---- Diff editor (UNIVERSAL green/red, not theme-derived) ----
+        # Users expect "green = added, red = removed" in any diff view.
+        # Mapping these to the theme's analogous green or complement
+        # would break that expectation. We use a fixed green/red pair
+        # that has good contrast on both light and dark bgs.
         "diffEditor.background": bg,
         "diffEditor.border": _alpha(fg, "20"),
         "diffEditor.diagonalFill": _alpha(accent, "20"),
-        "diffEditor.insertedTextBackground": _alpha(tokens["function"], "30"),
-        "diffEditor.removedTextBackground": _alpha(sel, "30"),
-        "diffEditorGutter.insertedLineBackground": _alpha(tokens["function"], "60"),
-        "diffEditorGutter.removedLineBackground": _alpha(sel, "60"),
-        "diffEditor.insertedLineBackground": _alpha(tokens["function"], "20"),
-        "diffEditor.removedLineBackground": _alpha(sel, "20"),
+        "diffEditor.insertedTextBackground": _alpha(git_added, "30"),
+        "diffEditor.removedTextBackground": _alpha(git_deleted, "30"),
+        "diffEditorGutter.insertedLineBackground": _alpha(git_added, "60"),
+        "diffEditorGutter.removedLineBackground": _alpha(git_deleted, "60"),
+        "diffEditor.insertedLineBackground": _alpha(git_added, "20"),
+        "diffEditor.removedLineBackground": _alpha(git_deleted, "20"),
 
-        # ---- Merge ----
-        "merge.currentHeaderBackground": _alpha(tokens["function"], "40"),
-        "merge.incomingHeaderBackground": _alpha(sel, "40"),
-        "merge.currentContentBackground": _alpha(tokens["function"], "15"),
-        "merge.incomingContentBackground": _alpha(sel, "15"),
+        # ---- Merge (also UNIVERSAL green/red) ----
+        # current = the local version (kept) -> green
+        # incoming = the incoming version (incoming) -> red-ish
+        "merge.currentHeaderBackground": _alpha(git_added, "40"),
+        "merge.incomingHeaderBackground": _alpha(git_deleted, "40"),
+        "merge.currentContentBackground": _alpha(git_added, "15"),
+        "merge.incomingContentBackground": _alpha(git_deleted, "15"),
         "merge.border": _alpha(fg, "30"),
 
-        # ---- Git decorations ----
-        "gitDecoration.addedResourceForeground": tokens["function"],
-        "gitDecoration.modifiedResourceForeground": tokens["type"],
-        "gitDecoration.deletedResourceForeground": sel,
-        "gitDecoration.untrackedResourceForeground": accent,
+        # ---- Git decorations (UNIVERSAL green/red) ----
+        "gitDecoration.addedResourceForeground": git_added,
+        "gitDecoration.modifiedResourceForeground": git_modified,
+        "gitDecoration.deletedResourceForeground": git_deleted,
+        "gitDecoration.untrackedResourceForeground": git_added,
         "gitDecoration.ignoredResourceForeground": _alpha(fg, "50"),
-        "gitDecoration.conflictingResourceForeground": sel,
+        "gitDecoration.conflictingResourceForeground": git_modified,
         "gitDecoration.submoduleResourceForeground": tokens["string"],
 
         # ---- Charts ----
