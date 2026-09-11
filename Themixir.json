@@ -1,96 +1,16 @@
 {
   "_meta": {
-    "schema_version": 2,
-    "note": "Each color has: selection (vibrant base, used for cursor/badge/highlight), accent (slightly darker/lighter for keywords/storage — never identical to selection), and 5 variants (light/normal/dark/solarized/solarized_dark) with their own bg+fg. Comments/strings/numbers are derived algorithmically by the generator."
+    "schema_version": 3,
+    "note": "Each colour declares just `selection` (vibrant base) and `accent` (slightly darker/lighter derivative). The 5 variants (solarized/light/normal/dark/solarized_dark) and their backgrounds are derived algorithmically by generate_themes.py via alaja, so that every colour has a strong, distinct identity."
   },
-  "red": {
-    "selection": "#E63946",
-    "accent": "#C0392B",
-    "light":         { "bg": "#FBEDED", "fg": "#3D1717" },
-    "normal":        { "bg": "#1E1E1E", "fg": "#D4D4D4" },
-    "dark":          { "bg": "#1F0F11", "fg": "#F5D5D5" },
-    "solarized":     { "bg": "#FDF6E3", "fg": "#586E75" },
-    "solarized_dark":{ "bg": "#002B36", "fg": "#93A1A1" }
-  },
-  "green": {
-    "selection": "#4CAF50",
-    "accent": "#388E3C",
-    "light":         { "bg": "#F0F5EC", "fg": "#1F2E14" },
-    "normal":        { "bg": "#1E1E1E", "fg": "#D4D4D4" },
-    "dark":          { "bg": "#0E1810", "fg": "#D5E8D5" },
-    "solarized":     { "bg": "#FDF6E3", "fg": "#586E75" },
-    "solarized_dark":{ "bg": "#002B36", "fg": "#93A1A1" }
-  },
-  "blue": {
-    "selection": "#2E86DE",
-    "accent": "#1976D2",
-    "light":         { "bg": "#EBF1F8", "fg": "#15233D" },
-    "normal":        { "bg": "#1E1E1E", "fg": "#D4D4D4" },
-    "dark":          { "bg": "#0F121A", "fg": "#D5D8E5" },
-    "solarized":     { "bg": "#FDF6E3", "fg": "#586E75" },
-    "solarized_dark":{ "bg": "#002B36", "fg": "#93A1A1" }
-  },
-  "purple": {
-    "selection": "#9B59B6",
-    "accent": "#8E44AD",
-    "light":         { "bg": "#F2E8F5", "fg": "#2A1538" },
-    "normal":        { "bg": "#1E1E1E", "fg": "#D4D4D4" },
-    "dark":          { "bg": "#150E18", "fg": "#E5D5E8" },
-    "solarized":     { "bg": "#FDF6E3", "fg": "#586E75" },
-    "solarized_dark":{ "bg": "#002B36", "fg": "#93A1A1" }
-  },
-  "orange": {
-    "selection": "#FF7043",
-    "accent": "#E64A19",
-    "light":         { "bg": "#FBEDE5", "fg": "#3D1D0E" },
-    "normal":        { "bg": "#1E1E1E", "fg": "#D4D4D4" },
-    "dark":          { "bg": "#1A0E07", "fg": "#F5E0D0" },
-    "solarized":     { "bg": "#FDF6E3", "fg": "#586E75" },
-    "solarized_dark":{ "bg": "#002B36", "fg": "#93A1A1" }
-  },
-  "light_blue": {
-    "selection": "#5DADE2",
-    "accent": "#3498DB",
-    "light":         { "bg": "#E8F1F8", "fg": "#102538" },
-    "normal":        { "bg": "#1E1E1E", "fg": "#D4D4D4" },
-    "dark":          { "bg": "#0F1419", "fg": "#D5DEE8" },
-    "solarized":     { "bg": "#FDF6E3", "fg": "#586E75" },
-    "solarized_dark":{ "bg": "#002B36", "fg": "#93A1A1" }
-  },
-  "gold": {
-    "selection": "#F39C12",
-    "accent": "#B7791F",
-    "light":         { "bg": "#FAF0DA", "fg": "#3D2F0A" },
-    "normal":        { "bg": "#1E1E1E", "fg": "#D4D4D4" },
-    "dark":          { "bg": "#1A1407", "fg": "#F0E5C0" },
-    "solarized":     { "bg": "#FDF6E3", "fg": "#586E75" },
-    "solarized_dark":{ "bg": "#002B36", "fg": "#93A1A1" }
-  },
-  "silver": {
-    "selection": "#A6ACAF",
-    "accent": "#7F8C8D",
-    "light":         { "bg": "#F2F2F2", "fg": "#2C2C2C" },
-    "normal":        { "bg": "#1E1E1E", "fg": "#D4D4D4" },
-    "dark":          { "bg": "#181818", "fg": "#E0E0E0" },
-    "solarized":     { "bg": "#FDF6E3", "fg": "#586E75" },
-    "solarized_dark":{ "bg": "#002B36", "fg": "#93A1A1" }
-  },
-  "copper": {
-    "selection": "#B87333",
-    "accent": "#8B4513",
-    "light":         { "bg": "#FAEFE5", "fg": "#3D2510" },
-    "normal":        { "bg": "#1E1E1E", "fg": "#D4D4D4" },
-    "dark":          { "bg": "#150A02", "fg": "#E5D5C0" },
-    "solarized":     { "bg": "#FDF6E3", "fg": "#586E75" },
-    "solarized_dark":{ "bg": "#002B36", "fg": "#93A1A1" }
-  },
-  "magenta": {
-    "selection": "#E91E63",
-    "accent": "#C2185B",
-    "light":         { "bg": "#FBEDF2", "fg": "#3D0F1F" },
-    "normal":        { "bg": "#1E1E1E", "fg": "#D4D4D4" },
-    "dark":          { "bg": "#180710", "fg": "#F0D5E0" },
-    "solarized":     { "bg": "#FDF6E3", "fg": "#586E75" },
-    "solarized_dark":{ "bg": "#002B36", "fg": "#93A1A1" }
-  }
+  "red":         { "selection": "#E63946", "accent": "#B91C2C" },
+  "green":       { "selection": "#3FA34D", "accent": "#2E7D3A" },
+  "blue":        { "selection": "#2680E0", "accent": "#1864B8" },
+  "purple":      { "selection": "#9B59B6", "accent": "#7D3C98" },
+  "orange":      { "selection": "#FF7043", "accent": "#D8501F" },
+  "light_blue":  { "selection": "#3FB8CF", "accent": "#1B8FA3" },
+  "gold":        { "selection": "#E8A317", "accent": "#B07908" },
+  "silver":      { "selection": "#9DA5AC", "accent": "#6F7981" },
+  "copper":      { "selection": "#B87333", "accent": "#8A4F1C" },
+  "magenta":     { "selection": "#E91E63", "accent": "#AD1457" }
 }

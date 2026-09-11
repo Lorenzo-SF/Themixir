@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Themixir theme generator (schema v2).
+"""Themixir theme generator (schema v3).
 
-Reads Themixir.json (schema v2): 10 base palettes × 5 variants
-(solarized, light, normal, dark, solarized_dark). Produces 50 theme
-JSON files under themes/ and rewrites the `contributes.themes` array in
-package.json. Uses pure Python for color math (harmonies, darken,
-lighten) and shells out to alaja only for WCAG ratio validation.
+Reads Themixir.json (schema v3): 10 base palettes × `selection`/`accent`.
+Generates 5 variants per palette (solarized, light, normal, dark,
+solarized_dark) with backgrounds tinted from the selection via alaja.
+
+All colour math (harmonies, darken, lighten) is delegated to alaja so
+that the token palette for each colour feels distinct instead of being
+just a hue rotation. WCAG 2.1 ratios are validated and auto-corrected.
 
 Run: python3 generate_themes.py
 """
@@ -23,147 +25,163 @@ ROOT = Path(__file__).parent
 ALAJA = "/home/lorenzo/bin/alaja"
 
 VARIANTS = ["solarized", "light", "normal", "dark", "solarized_dark"]
-# Variant → uiTheme (light vs dark base)
-UI_THEME = {"solarized": "vs", "light": "vs", "normal": "vs-dark",
-            "dark": "vs-dark", "solarized_dark": "vs-dark"}
-# Variant → file suffix (empty for "normal")
-FILE_SUFFIX = {"solarized": "_solarized", "light": "_light",
-               "normal": "", "dark": "_dark", "solarized_dark": "_solarized_dark"}
-# Variant → display suffix (empty for "normal")
-DISPLAY_SUFFIX = {"solarized": " Solarized", "light": " Light",
-                  "normal": "", "dark": " Dark",
-                  "solarized_dark": " Solarized Dark"}
+UI_THEME = {
+    "solarized": "vs",
+    "light": "vs",
+    "normal": "vs-dark",
+    "dark": "vs-dark",
+    "solarized_dark": "vs-dark",
+}
+FILE_SUFFIX = {
+    "solarized": "_solarized",
+    "light": "_light",
+    "normal": "",
+    "dark": "_dark",
+    "solarized_dark": "_solarized_dark",
+}
+DISPLAY_SUFFIX = {
+    "solarized": " Solarized",
+    "light": " Light",
+    "normal": "",
+    "dark": " Dark",
+    "solarized_dark": " Solarized Dark",
+}
+
+# Fixed background and foreground for solarized variants (Solarized base palette).
+SOLARIZED_BG = "#FDF6E3"
+SOLARIZED_FG = "#586E75"
+SOLARIZED_DARK_BG = "#002B36"
+SOLARIZED_DARK_FG = "#93A1A1"
+
+# Fixed neutral background for the "normal" variant (everyone likes VS Code dark+).
+NORMAL_BG = "#1E1E1E"
+NORMAL_FG = "#D4D4D4"
+
+# Alaja steps used for `lighten`/`darken` to produce tinted bgs. 1..10.
+LIGHTEN_STEPS = 7
+DARKEN_STEPS = 7
+
+# Alaja harmonies used to seed each token role.
+# We pick the most visually distinct slots so every colour's token set
+# looks like a *family* rather than a hue rotation of itself.
+TOKEN_HARMONIES = {
+    # role         : (alaja_harmony, index_in_alaja_output, hue_shift_or_None)
+    "comment":     ("analogous",      1, None),   # base ±30° → muted similar hue
+    "string":      ("analogous",      2, None),   # base +30°
+    "string_regex":("split",          2, None),   # base +210°
+    "number":      ("complementary",  1, None),   # base +180°
+    "function":    ("triad",          1, None),   # base +120°
+    "class":       ("triad",          2, None),   # base +240°
+    "type":        ("split",          1, None),   # base +150°
+    "parameter":   ("analogous",      1, None),   # base -30°
+    "property":    ("split",          2, None),   # base +210° (variant of split)
+    "constant_lang": ("complementary", 1, None),  # italic constants
+    "constant_char_escape": ("triad",  2, None),  # escapes (bold-ish)
+}
+
+# Cache alaja results so we don't pay subprocess cost twice.
+_alaja_cache: dict[tuple, str | list[str]] = {}
 
 
 # ----------------------------------------------------------------------
-# Color math
+# Alaja wrappers
 # ----------------------------------------------------------------------
 
-def _hex_to_rgb(h: str) -> tuple[int, int, int]:
-    h = h.lstrip("#")
-    return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
-
-
-def _rgb_to_hex(r: float, g: float, b: float) -> str:
-    return "#{:02X}{:02X}{:02X}".format(
-        max(0, min(255, int(round(r)))),
-        max(0, min(255, int(round(g)))),
-        max(0, min(255, int(round(b)))),
+def _alaja(*args: str) -> str:
+    """Run alaja with the given args and return stdout."""
+    cmd = [ALAJA, *args]
+    key = tuple(args)
+    if key in _alaja_cache:
+        return _alaja_cache[key]  # type: ignore[return-value]
+    # alaja is an Elixir script that needs HOME; other env vars don't matter.
+    env = {
+        "HOME": str(Path.home()),
+        "NO_COLOR": "1",
+        "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "LANG": "C.UTF-8",
+        "LC_ALL": "C.UTF-8",
+    }
+    result = subprocess.run(
+        cmd, capture_output=True, text=True, timeout=15, env=env,
     )
+    out = result.stdout.strip()
+    _alaja_cache[key] = out
+    return out
 
 
-def _rgb_to_hsl(r, g, b) -> tuple[float, float, float]:
-    r, g, b = r / 255, g / 255, b / 255
-    mx, mn = max(r, g, b), min(r, g, b)
-    h = s = 0.0
-    l = (mx + mn) / 2
-    if mx != mn:
-        d = mx - mn
-        s = d / (2 - mx - mn) if l > 0.5 else d / (mx + mn)
-        if mx == r:
-            h = ((g - b) / d + (6 if g < b else 0)) / 6
-        elif mx == g:
-            h = ((b - r) / d + 2) / 6
-        else:
-            h = ((r - g) / d + 4) / 6
-    return h * 360, s, l
+_HEX_RE = re.compile(r"#([0-9A-Fa-f]{6})\b")
 
 
-def _hsl_to_rgb(h: float, s: float, l: float) -> tuple[float, float, float]:
-    h = (h % 360) / 360
-
-    def _q(p: float, q: float, t: float) -> float:
-        if t < 0:
-            t += 1
-        if t > 1:
-            t -= 1
-        if t < 1 / 6:
-            return p + (q - p) * 6 * t
-        if t < 1 / 2:
-            return q
-        if t < 2 / 3:
-            return p + (q - p) * (2 / 3 - t) * 6
-        return p
-
-    if s == 0:
-        r = g = b = l
-    else:
-        q = l * (1 + s) if l < 0.5 else l + s - l * s
-        p = 2 * l - q
-        r = _q(p, q, h + 1 / 3)
-        g = _q(p, q, h)
-        b = _q(p, q, h - 1 / 3)
-    return r * 255, g * 255, b * 255
+def _extract_hexes(text: str) -> list[str]:
+    """Pull every #RRGGBB hex out of alaja's table-formatted output."""
+    return [f"#{m.upper()}" for m in _HEX_RE.findall(text)]
 
 
-def darken(hex_color: str, amount: float = 0.2) -> str:
-    r, g, b = _hex_to_rgb(hex_color)
-    return _rgb_to_hex(r * (1 - amount), g * (1 - amount), b * (1 - amount))
+def alaja_color(hex_color: str) -> str:
+    """Run `alaja color <hex>` and return the canonical hex."""
+    out = _alaja("color", f"hex:{hex_color}", "--no-color", "--quiet")
+    hexes = _extract_hexes(out)
+    if not hexes:
+        raise RuntimeError(f"alaja could not parse {hex_color}: {out!r}")
+    return hexes[0]
 
 
-def lighten(hex_color: str, amount: float = 0.2) -> str:
-    r, g, b = _hex_to_rgb(hex_color)
-    return _rgb_to_hex(
-        r + (255 - r) * amount,
-        g + (255 - g) * amount,
-        b + (255 - b) * amount,
-    )
+def alaja_darken(hex_color: str, steps: int) -> str:
+    """Run `alaja color <hex> --darken N` and return the result."""
+    out = _alaja("color", f"hex:{hex_color}", "--darken", str(steps),
+                 "--no-color", "--quiet")
+    hexes = _extract_hexes(out)
+    if not hexes:
+        raise RuntimeError(f"alaja darken failed for {hex_color}: {out!r}")
+    return hexes[0]
 
 
-def _mix(hex_color: str, with_bg: str, alpha: float) -> str:
-    """Mix hex_color with with_bg by alpha (0 = hex_color, 1 = with_bg)."""
-    r1, g1, b1 = _hex_to_rgb(hex_color)
-    r2, g2, b2 = _hex_to_rgb(with_bg)
-    return _rgb_to_hex(
-        r1 * (1 - alpha) + r2 * alpha,
-        g1 * (1 - alpha) + g2 * alpha,
-        b1 * (1 - alpha) + b2 * alpha,
-    )
+def alaja_lighten(hex_color: str, steps: int) -> str:
+    """Run `alaja color <hex> --lighten N` and return the result."""
+    out = _alaja("color", f"hex:{hex_color}", "--lighten", str(steps),
+                 "--no-color", "--quiet")
+    hexes = _extract_hexes(out)
+    if not hexes:
+        raise RuntimeError(f"alaja lighten failed for {hex_color}: {out!r}")
+    return hexes[0]
 
 
-def _is_light_bg(bg_hex: str) -> bool:
-    r, g, b = _hex_to_rgb(bg_hex)
-    lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-    return lum > 0.5
+_HARMONY_ALIASES = {
+    "analogous": "analogous",
+    "triad": "triad",
+    "complementary": "complementary",
+    "split": "split_complementary",
+    "split_complementary": "split_complementary",
+    "square": "square",
+    "compound": "compound",
+    "monochromatic": "monochromatic",
+}
 
 
-def _rotate_hue(hex_color: str, degrees: float) -> str:
-    r, g, b = _hex_to_rgb(hex_color)
-    h, s, l = _rgb_to_hsl(r, g, b)
-    h = (h + degrees) % 360
-    nr, ng, nb = _hsl_to_rgb(h, s, l)
-    return _rgb_to_hex(nr, ng, nb)
+def alaja_harmony(hex_color: str, harmony: str) -> list[str]:
+    """Run `alaja color <hex> --harmony TYPE` and return a list of hexes.
 
-
-def analogous(hex_color: str) -> list[str]:
-    return [_rotate_hue(hex_color, -30), hex_color, _rotate_hue(hex_color, 30)]
-
-
-def triad(hex_color: str) -> list[str]:
-    return [hex_color, _rotate_hue(hex_color, 120), _rotate_hue(hex_color, 240)]
-
-
-def complementary(hex_color: str) -> list[str]:
-    return [hex_color, _rotate_hue(hex_color, 180)]
-
-
-def split_complementary(hex_color: str) -> list[str]:
-    return [hex_color, _rotate_hue(hex_color, 150), _rotate_hue(hex_color, 210)]
+    Returns [base, ...harmonies] (base is always index 0).
+    """
+    h = _HARMONY_ALIASES.get(harmony, harmony)
+    out = _alaja("color", f"hex:{hex_color}", "--harmony", h,
+                 "--no-color", "--quiet")
+    hexes = _extract_hexes(out)
+    if not hexes:
+        raise RuntimeError(f"alaja harmony {harmony!r} failed for "
+                           f"{hex_color}: {out!r}")
+    return hexes
 
 
 # ----------------------------------------------------------------------
-# WCAG validation (pure Python — much faster than shelling out per check)
+# WCAG validation (pure Python — fast)
 # ----------------------------------------------------------------------
 
 def _srgb_to_linear(c: float) -> float:
-    """Convert sRGB component (0-1) to linear-light (0-1)."""
-    if c <= 0.04045:
-        return c / 12.92
-    return ((c + 0.055) / 1.055) ** 2.4
+    return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
 
 
 def _relative_luminance(hex_color: str) -> float:
-    """Compute WCAG relative luminance for a hex color (0-1)."""
     h = hex_color.lstrip("#")
     r = _srgb_to_linear(int(h[0:2], 16) / 255)
     g = _srgb_to_linear(int(h[2:4], 16) / 255)
@@ -172,10 +190,6 @@ def _relative_luminance(hex_color: str) -> float:
 
 
 def wcag_ratio(fg: str, bg: str) -> float:
-    """Compute WCAG ratio between fg and bg (both hex).
-
-    Verified against alaja: matches to within rounding.
-    """
     l1 = _relative_luminance(fg)
     l2 = _relative_luminance(bg)
     lighter, darker = max(l1, l2), min(l1, l2)
@@ -183,112 +197,165 @@ def wcag_ratio(fg: str, bg: str) -> float:
 
 
 def _ensure_contrast(fg: str, bg: str, min_ratio: float = 4.5) -> str:
-    """If fg vs bg is below min_ratio, darken/lighten fg until it passes."""
     if wcag_ratio(fg, bg) >= min_ratio:
         return fg
-    # Try alternating darken/lighten
     for step in range(1, 11):
-        candidate = darken(fg, step * 0.1)
+        candidate = alaja_darken(fg, step)
         if wcag_ratio(candidate, bg) >= min_ratio:
             return candidate
     for step in range(1, 11):
-        candidate = lighten(fg, step * 0.1)
+        candidate = alaja_lighten(fg, step)
         if wcag_ratio(candidate, bg) >= min_ratio:
             return candidate
-    return fg  # give up
+    return fg
 
 
 # ----------------------------------------------------------------------
 # Theme builder
 # ----------------------------------------------------------------------
 
-def _a(hex_color: str, alpha_hex: str) -> str:
-    """Append alpha channel (2 hex digits) to a 6-digit hex color."""
+def _alpha(hex_color: str, alpha_hex: str) -> str:
     return hex_color.lstrip("#") + alpha_hex.upper()
+
+
+def _best_contrast_fg(against: str, candidates: list[str]) -> str:
+    """Return the candidate with the best WCAG ratio against `against`."""
+    best, best_ratio = candidates[0], wcag_ratio(candidates[0], against)
+    for c in candidates:
+        r = wcag_ratio(c, against)
+        if r > best_ratio:
+            best, best_ratio = c, r
+        if r >= 4.5:
+            return c
+    return best
+
+
+def _build_variant_bgfg(variant: str, selection: str) -> tuple[str, str]:
+    """Compute the bg/fg pair for a variant using alaja.
+
+    - solarized / solarized_dark: fixed Solarized base/03 palette (no tint)
+    - light / dark: bg tinted from selection via alaja lighten/darken;
+      fg computed to maintain contrast (≥4.5) with bg, using alaja for tone
+    - normal: neutral #1E1E1E + #D4D4D4
+    """
+    if variant == "solarized":
+        return SOLARIZED_BG, SOLARIZED_FG
+    if variant == "solarized_dark":
+        return SOLARIZED_DARK_BG, SOLARIZED_DARK_FG
+    if variant == "normal":
+        return NORMAL_BG, NORMAL_FG
+
+    if variant == "light":
+        bg = alaja_lighten(selection, LIGHTEN_STEPS)
+        # fg: dark, tinted with selection for harmony
+        fg = alaja_darken(selection, DARKEN_STEPS)
+        # ensure contrast, otherwise nudge darker
+        for _ in range(8):
+            if wcag_ratio(fg, bg) >= 4.5:
+                break
+            fg = alaja_darken(fg, 1)
+        return bg, fg
+
+    if variant == "dark":
+        bg = alaja_darken(selection, DARKEN_STEPS)
+        fg = alaja_lighten(selection, LIGHTEN_STEPS)
+        for _ in range(8):
+            if wcag_ratio(fg, bg) >= 4.5:
+                break
+            fg = alaja_lighten(fg, 1)
+        return bg, fg
+
+    raise ValueError(f"unknown variant {variant!r}")
+
+
+def _resolve_token(role: str, base: str, accent: str) -> str:
+    """Resolve a token colour for `role` from `base` (usually accent)."""
+    if role == "keyword":
+        return accent
+    harmony_name, idx, _shift = TOKEN_HARMONIES[role]
+    palette = alaja_harmony(base, harmony_name)
+    if idx >= len(palette):
+        # fallback: if alaja returned fewer hues than expected, use base
+        return base
+    return palette[idx]
+
+
+# Roles that need WCAG-AA (≥4.5) against editor background.
+CRITICAL_TOKEN_ROLES = (
+    "keyword", "string", "number", "function", "class",
+    "type", "parameter", "property", "string_regex",
+    "constant_lang", "constant_char_escape",
+)
+# Roles that only need decorative contrast (≥3.0).
+DECORATIVE_TOKEN_ROLES = ("comment",)
+
+
+def _tint_variant_with_token_fix(
+    bg: str, fg: str, accent: str, selection: str,
+) -> tuple[str, str, str, dict[str, str]]:
+    """Compute token colors for a variant, auto-fixing WCAG ratios.
+
+    Returns (bg, fg, accent, token_map)."""
+    # Base accent fix vs bg
+    accent = _ensure_contrast(accent, bg, 4.5)
+    fg = _ensure_contrast(fg, bg, 4.5)
+
+    # Token palette derived from selection (more variety than from accent alone,
+    # and selection is the "soul" of the colour).
+    tokens: dict[str, str] = {}
+    for role in list(TOKEN_HARMONIES.keys()) + ["keyword"]:
+        tokens[role] = _resolve_token(role, selection, accent)
+
+    # Direction-aware auto-fix: try both directions and keep the smaller
+    # adjustment that crosses the target threshold.
+    def _fix(c: str, target: float) -> str:
+        if wcag_ratio(c, bg) >= target:
+            return c
+        # Try lightening first (most common case for dark themes).
+        for step in range(1, 11):
+            candidate = alaja_lighten(c, step)
+            if wcag_ratio(candidate, bg) >= target:
+                return candidate
+        # Fall back to darkening.
+        for step in range(1, 11):
+            candidate = alaja_darken(c, step)
+            if wcag_ratio(candidate, bg) >= target:
+                return candidate
+        # Last resort: pure white or black depending on bg luminance.
+        return "#FFFFFF" if _relative_luminance(bg) < 0.5 else "#000000"
+
+    # Critical tokens: ≥4.5
+    for role in CRITICAL_TOKEN_ROLES:
+        if role in tokens:
+            tokens[role] = _fix(tokens[role], 4.5)
+    # Comments: ≥3.0 (decorative)
+    for role in DECORATIVE_TOKEN_ROLES:
+        if role in tokens:
+            tokens[role] = _fix(tokens[role], 3.0)
+
+    return bg, fg, accent, tokens
+
+
+def _is_light_bg(bg_hex: str) -> bool:
+    return _relative_luminance(bg_hex) > 0.5
 
 
 def build_theme(color_name: str, variant: str, palette: dict) -> dict:
     selection = palette["selection"]
     accent = palette["accent"]
-    bg = palette["bg"]
-    fg = palette["fg"]
 
-    # Derive harmony colors from accent (these drive token scopes)
-    tri = triad(accent)
-    spl = split_complementary(accent)
-    ana = analogous(accent)
-    com = complementary(accent)
+    bg, fg = _build_variant_bgfg(variant, selection)
+    bg, fg, accent, tokens = _tint_variant_with_token_fix(
+        bg, fg, accent, selection)
 
-    com_col = darken(accent, 0.2)
-    str_col = ana[2]
-    num_col = com[1]
-    func_col = tri[1]
-    class_col = tri[2]
-    type_col = tri[2]
-    param_col = ana[2]
-    prop_col = spl[1]
-    regex_col = spl[2]
-
-    # Auto-fix token contrast so dark tokens stay readable on dark bgs.
-    # Thresholds: ≥4.5 for "text" tokens (string, num, keyword), ≥3.0 for
-    # "decorative" tokens (comment, function, class, type, param, prop, regex).
-    # Auto-fix is direction-aware: lighten if bg is dark, darken if bg is light.
-    is_light_bg = _is_light_bg(bg)
-
-    def _ensure_token(c: str, target_ratio: float) -> str:
-        if wcag_ratio(c, bg) >= target_ratio:
-            return c
-        # Try lightening first if bg is dark, darkening if bg is light.
-        order = (lighten, darken) if not is_light_bg else (darken, lighten)
-        for fn in order:
-            for step in range(1, 16):
-                candidate = fn(c, step * 0.05)
-                if wcag_ratio(candidate, bg) >= target_ratio:
-                    return candidate
-        return c
-
-    com_col = _ensure_token(com_col, 3.0)
-    str_col = _ensure_token(str_col, 4.5)
-    num_col = _ensure_token(num_col, 4.5)
-    func_col = _ensure_token(func_col, 3.0)
-    class_col = _ensure_token(class_col, 3.0)
-    type_col = _ensure_token(type_col, 3.0)
-    param_col = _ensure_token(param_col, 3.0)
-    prop_col = _ensure_token(prop_col, 3.0)
-    regex_col = _ensure_token(regex_col, 3.0)
-
-    # UI helpers
     is_light = _is_light_bg(bg)
-    sidebar_bg = lighten(bg, 0.05) if is_light else darken(bg, 0.05)
-    sidebar_bg_dark = darken(bg, 0.05) if not is_light else bg
-    line_bg = darken(bg, 0.05) if not is_light else lighten(bg, 0.05)
+    sidebar_bg = alaja_lighten(bg, 1) if is_light else alaja_darken(bg, 1)
+    line_bg = alaja_darken(bg, 1) if not is_light else alaja_lighten(bg, 1)
 
-    # Auto-correct editor.foreground vs editor.background to AA FIRST.
-    fg = _ensure_contrast(fg, bg, 4.5)
-    # And accent (keyword) vs bg
-    accent = _ensure_contrast(accent, bg, 4.5)
+    status_fg = _best_contrast_fg(accent, [bg, fg, "#FFFFFF", "#000000"])
+    activity_badge_fg = status_fg
 
-    # Now pick contrasting fgs for status bar and badge (accent is final).
-    def _pick_contrast_fg(against: str, candidates: list[str]) -> str:
-        """Pick the candidate with the best WCAG ratio against `against`.
-        Always returns something, even if no candidate passes 4.5."""
-        best = candidates[0]
-        best_ratio = wcag_ratio(best, against)
-        for c in candidates:
-            r = wcag_ratio(c, against)
-            if r > best_ratio:
-                best, best_ratio = c, r
-            if r >= 4.5:
-                return c
-        return best
-
-    status_fg = _pick_contrast_fg(accent, [bg, fg, "#FFFFFF", "#000000"])
-    # Activity bar badge: accent bg, must pick a contrasting fg
-    activity_badge_fg = _pick_contrast_fg(accent, [bg, fg, "#FFFFFF", "#000000"])
-
-    # Selection highlight alpha helpers
-    def _alpha(c: str, alpha: str) -> str:
-        return _a(c, alpha)
+    sel = selection
 
     colors = {
         # ---- Editor core ----
@@ -296,62 +363,62 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
         "editor.foreground": fg,
         "editorCursor.foreground": accent,
         "editor.lineHighlightBackground": line_bg,
-        "editor.lineHighlightBorder": _alpha(selection, "30"),
-        "editor.selectionBackground": _alpha(selection, "60"),
-        "editor.selectionHighlightBackground": _alpha(selection, "30"),
-        "editor.inactiveSelectionBackground": _alpha(selection, "40"),
-        "editor.wordHighlightBackground": _alpha(selection, "25"),
-        "editor.wordHighlightStrongBackground": _alpha(selection, "40"),
-        "editor.wordHighlightBorder": _alpha(selection, "60"),
-        "editor.findMatchBackground": _alpha(selection, "50"),
-        "editor.findMatchHighlightBackground": _alpha(selection, "30"),
-        "editor.findMatchBorder": selection,
+        "editor.lineHighlightBorder": _alpha(sel, "30"),
+        "editor.selectionBackground": _alpha(sel, "60"),
+        "editor.selectionHighlightBackground": _alpha(sel, "30"),
+        "editor.inactiveSelectionBackground": _alpha(sel, "40"),
+        "editor.wordHighlightBackground": _alpha(sel, "25"),
+        "editor.wordHighlightStrongBackground": _alpha(sel, "40"),
+        "editor.wordHighlightBorder": _alpha(sel, "60"),
+        "editor.findMatchBackground": _alpha(sel, "50"),
+        "editor.findMatchHighlightBackground": _alpha(sel, "30"),
+        "editor.findMatchBorder": sel,
         "editor.linkedEditingBackground": _alpha(accent, "30"),
-        "editor.rangeHighlightBackground": _alpha(selection, "20"),
+        "editor.rangeHighlightBackground": _alpha(sel, "20"),
         "editor.hoverHighlightBackground": _alpha(accent, "25"),
         "editorBracketMatch.background": _alpha(accent, "40"),
         "editorBracketMatch.border": accent,
         "editorIndentGuide.background": _alpha(fg, "20"),
-        "editorIndentGuide.activeBackground": _alpha(selection, "60"),
+        "editorIndentGuide.activeBackground": _alpha(sel, "60"),
         "editorWhitespace.foreground": _alpha(fg, "40"),
-        "editor.foldBackground": _alpha(selection, "20"),
+        "editor.foldBackground": _alpha(sel, "20"),
         "editorGutter.background": bg,
         "editorGutter.foreground": _alpha(fg, "60"),
-        "editorGutter.modifiedBackground": type_col,
-        "editorGutter.addedBackground": func_col,
-        "editorGutter.deletedBackground": selection,
+        "editorGutter.modifiedBackground": tokens["type"],
+        "editorGutter.addedBackground": tokens["function"],
+        "editorGutter.deletedBackground": sel,
         "editorLineNumber.foreground": _alpha(fg, "60"),
         "editorLineNumber.activeForeground": fg,
         "editorRuler.foreground": _alpha(fg, "20"),
-        "editorOverviewRuler.border": _alpha(selection, "60"),
-        "editorError.foreground": selection,
-        "editorError.background": _alpha(selection, "30"),
-        "editorWarning.foreground": type_col,
-        "editorWarning.background": _alpha(type_col, "30"),
-        "editorInfo.foreground": func_col,
-        "editorInfo.background": _alpha(func_col, "30"),
+        "editorOverviewRuler.border": _alpha(sel, "60"),
+        "editorError.foreground": sel,
+        "editorError.background": _alpha(sel, "30"),
+        "editorWarning.foreground": tokens["type"],
+        "editorWarning.background": _alpha(tokens["type"], "30"),
+        "editorInfo.foreground": tokens["function"],
+        "editorInfo.background": _alpha(tokens["function"], "30"),
         "editorMarkerNavigation.background": _alpha(fg, "10"),
-        "editorMarkerNavigationError.background": _alpha(selection, "60"),
-        "editorMarkerNavigationWarning.background": _alpha(type_col, "60"),
-        "editorMarkerNavigationInfo.background": _alpha(func_col, "60"),
+        "editorMarkerNavigationError.background": _alpha(sel, "60"),
+        "editorMarkerNavigationWarning.background": _alpha(tokens["type"], "60"),
+        "editorMarkerNavigationInfo.background": _alpha(tokens["function"], "60"),
         "editorSuggestWidget.background": sidebar_bg,
         "editorSuggestWidget.border": _alpha(fg, "30"),
         "editorSuggestWidget.foreground": fg,
         "editorSuggestWidget.highlightForeground": accent,
-        "editorSuggestWidget.selectedBackground": _alpha(selection, "30"),
+        "editorSuggestWidget.selectedBackground": _alpha(sel, "30"),
         "editorHoverWidget.background": sidebar_bg,
         "editorHoverWidget.border": _alpha(fg, "30"),
         "editorHoverWidget.foreground": fg,
         "editorHoverWidget.statusBarBackground": bg,
         "editorWidget.background": sidebar_bg,
         "editorWidget.border": _alpha(fg, "30"),
-        "editorWidget.resizeBorder": selection,
+        "editorWidget.resizeBorder": sel,
         "editorCodeLens.foreground": _alpha(fg, "60"),
-        "editorLightBulb.foreground": type_col,
-        "editorLightBulbAutoFix.foreground": func_col,
+        "editorLightBulb.foreground": tokens["type"],
+        "editorLightBulbAutoFix.foreground": tokens["function"],
 
         # ---- Workbench top-level ----
-        "focusBorder": _alpha(selection, "60"),
+        "focusBorder": _alpha(sel, "60"),
         "foreground": fg,
         "disabledForeground": _alpha(fg, "50"),
         "descriptionForeground": _alpha(fg, "70"),
@@ -385,10 +452,10 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
         "statusBar.background": accent,
         "statusBar.foreground": status_fg,
         "statusBar.noFolderBackground": accent,
-        "statusBar.debuggingBackground": selection,
-        "statusBarItem.activeBackground": _alpha(selection, "30"),
+        "statusBar.debuggingBackground": sel,
+        "statusBarItem.activeBackground": _alpha(sel, "30"),
         "statusBarItem.hoverBackground": _alpha(fg, "15"),
-        "statusBarItem.remoteBackground": func_col,
+        "statusBarItem.remoteBackground": tokens["function"],
 
         # ---- Tabs ----
         "tab.activeBackground": bg,
@@ -399,7 +466,7 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
         "tab.inactiveForeground": _alpha(fg, "60"),
         "tab.border": _alpha(fg, "10"),
         "tab.unfocusedActiveBackground": bg,
-        "tab.unfocusedInactiveBackground": sidebar_bg_dark,
+        "tab.unfocusedInactiveBackground": sidebar_bg,
 
         # ---- Panel ----
         "panel.background": bg,
@@ -415,7 +482,7 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
         # ---- Menu ----
         "menu.background": sidebar_bg,
         "menu.foreground": fg,
-        "menu.selectionBackground": _alpha(selection, "30"),
+        "menu.selectionBackground": _alpha(sel, "30"),
         "menu.selectionForeground": fg,
         "menu.selectionBorder": accent,
         "menu.separatorBackground": _alpha(fg, "20"),
@@ -424,21 +491,22 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
         # ---- Lists ----
         "list.background": sidebar_bg,
         "list.foreground": fg,
-        "list.activeSelectionBackground": _alpha(selection, "40"),
+        "list.activeSelectionBackground": _alpha(sel, "40"),
         "list.activeSelectionForeground": fg,
         "list.inactiveSelectionBackground": _alpha(fg, "15"),
         "list.inactiveSelectionForeground": _alpha(fg, "80"),
         "list.hoverBackground": _alpha(fg, "10"),
         "list.hoverForeground": fg,
         "list.highlightForeground": accent,
-        "list.focusBackground": _alpha(selection, "30"),
+        "list.focusBackground": _alpha(sel, "30"),
         "list.focusForeground": fg,
-        "list.dropBackground": _alpha(selection, "30"),
+        "list.dropBackground": _alpha(sel, "30"),
 
         # ---- Buttons ----
         "button.background": accent,
         "button.foreground": activity_badge_fg,
-        "button.hoverBackground": lighten(accent, 0.1) if not is_light else darken(accent, 0.1),
+        "button.hoverBackground": alaja_lighten(accent, 1) if not is_light
+                                  else alaja_darken(accent, 1),
         "button.border": accent,
         "button.secondaryBackground": _alpha(fg, "20"),
         "button.secondaryForeground": fg,
@@ -453,12 +521,12 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
         "inputOption.activeBorder": accent,
         "inputOption.activeForeground": activity_badge_fg,
         "inputOption.hoverBackground": _alpha(fg, "20"),
-        "inputValidation.errorBackground": _alpha(selection, "40"),
-        "inputValidation.errorForeground": selection,
-        "inputValidation.warningBackground": _alpha(type_col, "40"),
-        "inputValidation.warningForeground": type_col,
-        "inputValidation.infoBackground": _alpha(func_col, "40"),
-        "inputValidation.infoForeground": func_col,
+        "inputValidation.errorBackground": _alpha(sel, "40"),
+        "inputValidation.errorForeground": sel,
+        "inputValidation.warningBackground": _alpha(tokens["type"], "40"),
+        "inputValidation.warningForeground": tokens["type"],
+        "inputValidation.infoBackground": _alpha(tokens["function"], "40"),
+        "inputValidation.infoForeground": tokens["function"],
 
         # ---- Dropdown / Checkbox ----
         "dropdown.background": bg,
@@ -479,12 +547,12 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
         "notifications.background": sidebar_bg,
         "notifications.border": _alpha(fg, "30"),
         "notifications.foreground": fg,
-        "notifications.infoIcon": func_col,
-        "notifications.warningIcon": type_col,
-        "notifications.errorIcon": selection,
-        "notifications.infoBackground": _alpha(func_col, "30"),
-        "notifications.warningBackground": _alpha(type_col, "30"),
-        "notifications.errorBackground": _alpha(selection, "30"),
+        "notifications.infoIcon": tokens["function"],
+        "notifications.warningIcon": tokens["type"],
+        "notifications.errorIcon": sel,
+        "notifications.infoBackground": _alpha(tokens["function"], "30"),
+        "notifications.warningBackground": _alpha(tokens["type"], "30"),
+        "notifications.errorBackground": _alpha(sel, "30"),
 
         # ---- Breadcrumb / Settings ----
         "breadcrumb.background": sidebar_bg,
@@ -493,7 +561,7 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
         "breadcrumb.activeSelectionForeground": accent,
         "breadcrumbPicker.background": sidebar_bg,
         "settings.headerForeground": accent,
-        "settings.modifiedItemIndicator": selection,
+        "settings.modifiedItemIndicator": sel,
         "settings.inactiveModifiedItemIndicator": _alpha(fg, "50"),
         "settings.dropdownBackground": bg,
         "settings.dropdownForeground": fg,
@@ -512,10 +580,10 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
         # ---- Minimap ----
         "minimap.background": bg,
         "minimap.foreground": _alpha(fg, "50"),
-        "minimap.selectionHighlight": _alpha(selection, "60"),
-        "minimap.findMatchHighlight": _alpha(selection, "80"),
-        "minimap.errorHighlight": selection,
-        "minimap.warningHighlight": type_col,
+        "minimap.selectionHighlight": _alpha(sel, "60"),
+        "minimap.findMatchHighlight": _alpha(sel, "80"),
+        "minimap.errorHighlight": sel,
+        "minimap.warningHighlight": tokens["type"],
         "minimapSlider.background": _alpha(fg, "20"),
         "minimapSlider.hoverBackground": _alpha(fg, "30"),
         "minimapSlider.activeBackground": accent,
@@ -530,7 +598,7 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
         "peekViewResult.fileBackground": bg,
         "peekViewResult.lineForeground": fg,
         "peekViewResult.matchHighlightBackground": _alpha(accent, "40"),
-        "peekViewResult.selectionBackground": _alpha(selection, "40"),
+        "peekViewResult.selectionBackground": _alpha(sel, "40"),
         "peekViewResult.selectionForeground": fg,
         "peekViewTitle.background": sidebar_bg,
         "peekViewTitle.foreground": fg,
@@ -541,43 +609,44 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
         "diffEditor.background": bg,
         "diffEditor.border": _alpha(fg, "20"),
         "diffEditor.diagonalFill": _alpha(accent, "20"),
-        "diffEditor.insertedTextBackground": _alpha(func_col, "30"),
-        "diffEditor.removedTextBackground": _alpha(selection, "30"),
-        "diffEditorGutter.insertedLineBackground": _alpha(func_col, "60"),
-        "diffEditorGutter.removedLineBackground": _alpha(selection, "60"),
-        "diffEditor.insertedLineBackground": _alpha(func_col, "20"),
-        "diffEditor.removedLineBackground": _alpha(selection, "20"),
+        "diffEditor.insertedTextBackground": _alpha(tokens["function"], "30"),
+        "diffEditor.removedTextBackground": _alpha(sel, "30"),
+        "diffEditorGutter.insertedLineBackground": _alpha(tokens["function"], "60"),
+        "diffEditorGutter.removedLineBackground": _alpha(sel, "60"),
+        "diffEditor.insertedLineBackground": _alpha(tokens["function"], "20"),
+        "diffEditor.removedLineBackground": _alpha(sel, "20"),
 
         # ---- Merge ----
-        "merge.currentHeaderBackground": _alpha(func_col, "40"),
-        "merge.incomingHeaderBackground": _alpha(selection, "40"),
-        "merge.currentContentBackground": _alpha(func_col, "15"),
-        "merge.incomingContentBackground": _alpha(selection, "15"),
+        "merge.currentHeaderBackground": _alpha(tokens["function"], "40"),
+        "merge.incomingHeaderBackground": _alpha(sel, "40"),
+        "merge.currentContentBackground": _alpha(tokens["function"], "15"),
+        "merge.incomingContentBackground": _alpha(sel, "15"),
         "merge.border": _alpha(fg, "30"),
 
         # ---- Git decorations ----
-        "gitDecoration.addedResourceForeground": func_col,
-        "gitDecoration.modifiedResourceForeground": type_col,
-        "gitDecoration.deletedResourceForeground": selection,
+        "gitDecoration.addedResourceForeground": tokens["function"],
+        "gitDecoration.modifiedResourceForeground": tokens["type"],
+        "gitDecoration.deletedResourceForeground": sel,
         "gitDecoration.untrackedResourceForeground": accent,
         "gitDecoration.ignoredResourceForeground": _alpha(fg, "50"),
-        "gitDecoration.conflictingResourceForeground": selection,
-        "gitDecoration.submoduleResourceForeground": str_col,
+        "gitDecoration.conflictingResourceForeground": sel,
+        "gitDecoration.submoduleResourceForeground": tokens["string"],
 
         # ---- Charts ----
         "charts.foreground": fg,
         "charts.lines": _alpha(fg, "30"),
-        "charts.blue": func_col,
-        "charts.green": func_col,
-        "charts.yellow": type_col,
-        "charts.orange": type_col,
+        "charts.blue": tokens["function"],
+        "charts.green": tokens["function"],
+        "charts.yellow": tokens["type"],
+        "charts.orange": tokens["type"],
         "charts.purple": accent,
-        "charts.red": selection,
+        "charts.red": sel,
 
         # ---- Welcome / Walkthrough ----
         "welcomePage.background": bg,
         "welcomePage.buttonBackground": accent,
-        "welcomePage.buttonHoverBackground": lighten(accent, 0.1) if not is_light else darken(accent, 0.1),
+        "welcomePage.buttonHoverBackground": alaja_lighten(accent, 1) if not is_light
+                                            else alaja_darken(accent, 1),
         "welcomePage.buttonForeground": activity_badge_fg,
         "welcomePage.tileBackground": sidebar_bg,
         "welcomePage.tileHoverBackground": _alpha(fg, "10"),
@@ -591,10 +660,10 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
 
         # ---- Text styles ----
         "textLink.foreground": accent,
-        "textLink.activeForeground": selection,
+        "textLink.activeForeground": sel,
         "textBlockQuote.background": _alpha(fg, "10"),
         "textBlockQuote.border": accent,
-        "textPreformat.foreground": func_col,
+        "textPreformat.foreground": tokens["function"],
         "textSeparator.foreground": _alpha(fg, "40"),
 
         # ---- Keybinding labels ----
@@ -608,48 +677,39 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
         "terminal.foreground": fg,
         "terminalCursor.background": bg,
         "terminalCursor.foreground": accent,
-        "terminal.selectionBackground": _alpha(selection, "40"),
+        "terminal.selectionBackground": _alpha(sel, "40"),
         "terminal.selectionForeground": fg,
         "terminal.border": _alpha(fg, "20"),
-        "terminal.findMatchBackground": _alpha(selection, "50"),
-        "terminal.findMatchHighlightBackground": _alpha(selection, "30"),
+        "terminal.findMatchBackground": _alpha(sel, "50"),
+        "terminal.findMatchHighlightBackground": _alpha(sel, "30"),
         "terminal.hoverHighlightBackground": _alpha(accent, "25"),
-        "terminal.dropBackground": _alpha(selection, "30"),
+        "terminal.dropBackground": _alpha(sel, "30"),
     }
 
-    # Terminal ANSI 16 — derive from palette for consistency
-    bg_rgb = _hex_to_rgb(bg)
-    fg_rgb = _hex_to_rgb(fg)
-    sel_rgb = _hex_to_rgb(selection)
-    # Black = darkest readable (usually bg darken 0.5 for dark, or near-black for light)
-    if is_light:
-        ansi_black = "#000000"
-        ansi_bright_black = _rgb_to_hex(
-            **{k: v + (v * 0.3) for k, v in zip("rgb", bg_rgb)}
-        ) if False else _rgb_to_hex(bg_rgb[0] * 0.6, bg_rgb[1] * 0.6, bg_rgb[2] * 0.6)
-        ansi_white = fg
-        ansi_bright_white = darken(fg, 0.05)
-        ansi_green = com[1]  # complementary of accent
-        ansi_yellow = type_col
-        ansi_blue = func_col
-        ansi_magenta = accent
-        ansi_cyan = str_col
-        ansi_red = selection
-        # Brights = lighten by 0.15
-    else:
-        ansi_black = "#000000"
-        ansi_bright_black = _alpha(fg, "30")[:7] if len(_alpha(fg, "30")) >= 7 else darken(fg, 0.2)
-        ansi_white = fg
-        ansi_bright_white = lighten(fg, 0.1)
-        ansi_red = selection
-        ansi_green = com[1]
-        ansi_yellow = type_col
-        ansi_blue = func_col
-        ansi_magenta = accent
-        ansi_cyan = str_col
+    # ---- Terminal ANSI 16 (consistent across variants of a colour) ----
+    # We build the ANSI palette from the accent + its alaja harmonies,
+    # so light/dark/normal of the same colour share the same ANSI identity.
+    ansi_palette = alaja_harmony(accent, "triad")  # [accent, +120, +240]
+    ansi_comp = alaja_harmony(accent, "complementary")[1]
+    ansi_split = alaja_harmony(accent, "split_complementary")
+    ansi_ana = alaja_harmony(accent, "analogous")
+
+    # Black = darkest, White = lightest, mapped from bg/fg.
+    ansi_black = alaja_darken(bg, 4) if not is_light else "#000000"
+    ansi_white = fg
+    ansi_bright_black = alaja_lighten(ansi_black, 2)
+    ansi_bright_white = alaja_lighten(fg, 1) if not is_light else alaja_darken(fg, 1)
+
+    # Map: red, green, yellow, blue, magenta, cyan
+    ansi_red = sel
+    ansi_green = ansi_palette[1]      # triad +120°
+    ansi_yellow = ansi_ana[2]         # analogous +30°
+    ansi_blue = ansi_palette[2]       # triad +240°
+    ansi_magenta = ansi_split[1]      # split +150°
+    ansi_cyan = ansi_comp              # complementary
 
     def _bright(c: str) -> str:
-        return lighten(c, 0.15) if not is_light else darken(c, 0.15)
+        return alaja_lighten(c, 2) if not is_light else alaja_darken(c, 2)
 
     colors.update({
         "terminal.ansiBlack": ansi_black,
@@ -670,82 +730,153 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
         "terminal.ansiBrightWhite": ansi_bright_white,
     })
 
-    # tokenColors
+    # ---- tokenColors ----
     token_colors = [
         # Comments
-        {"scope": "comment", "settings": {"foreground": com_col, "fontStyle": "italic"}},
-        {"scope": "comment.line", "settings": {"foreground": com_col, "fontStyle": "italic"}},
-        {"scope": "comment.block", "settings": {"foreground": com_col, "fontStyle": "italic"}},
-        {"scope": "comment.documentation", "settings": {"foreground": com_col, "fontStyle": "italic"}},
+        {"scope": "comment", "settings": {"foreground": tokens["comment"],
+                                          "fontStyle": "italic"}},
+        {"scope": "comment.line", "settings": {"foreground": tokens["comment"],
+                                               "fontStyle": "italic"}},
+        {"scope": "comment.block", "settings": {"foreground": tokens["comment"],
+                                                "fontStyle": "italic"}},
+        {"scope": "comment.documentation",
+         "settings": {"foreground": tokens["comment"], "fontStyle": "italic"}},
+
         # Strings
-        {"scope": "string", "settings": {"foreground": str_col}},
-        {"scope": "string.quoted", "settings": {"foreground": str_col}},
-        {"scope": "string.template", "settings": {"foreground": str_col}},
-        {"scope": "string.interpolated", "settings": {"foreground": str_col}},
-        {"scope": "string.regexp", "settings": {"foreground": regex_col}},
+        {"scope": "string", "settings": {"foreground": tokens["string"]}},
+        {"scope": "string.quoted", "settings": {"foreground": tokens["string"]}},
+        {"scope": "string.template", "settings": {"foreground": tokens["string"]}},
+        {"scope": "string.interpolated",
+         "settings": {"foreground": tokens["string"]}},
+        {"scope": "string.regexp",
+         "settings": {"foreground": tokens["string_regex"]}},
+
         # Constants
-        {"scope": "constant.numeric", "settings": {"foreground": num_col}},
-        {"scope": "constant.character", "settings": {"foreground": num_col}},
-        {"scope": "constant.character.escape", "settings": {"foreground": regex_col}},
-        {"scope": "constant.language", "settings": {"foreground": num_col, "fontStyle": "italic"}},
-        {"scope": "variable.other.constant", "settings": {"foreground": num_col}},
+        {"scope": "constant.numeric",
+         "settings": {"foreground": tokens["number"]}},
+        {"scope": "constant.character",
+         "settings": {"foreground": tokens["number"]}},
+        {"scope": "constant.character.escape",
+         "settings": {"foreground": tokens["constant_char_escape"]}},
+        {"scope": "constant.language",
+         "settings": {"foreground": tokens["constant_lang"], "fontStyle": "italic"}},
+        {"scope": "variable.other.constant",
+         "settings": {"foreground": tokens["number"]}},
+
         # Keywords / storage
-        {"scope": "keyword", "settings": {"foreground": accent, "fontStyle": "bold"}},
-        {"scope": "keyword.control", "settings": {"foreground": accent, "fontStyle": "bold"}},
-        {"scope": "keyword.operator", "settings": {"foreground": accent}},
-        {"scope": "keyword.other", "settings": {"foreground": accent}},
-        {"scope": "storage", "settings": {"foreground": accent}},
-        {"scope": "storage.modifier", "settings": {"foreground": accent, "fontStyle": "italic"}},
-        {"scope": "storage.type", "settings": {"foreground": type_col, "fontStyle": "italic"}},
+        {"scope": "keyword",
+         "settings": {"foreground": tokens["keyword"], "fontStyle": "bold"}},
+        {"scope": "keyword.control",
+         "settings": {"foreground": tokens["keyword"], "fontStyle": "bold"}},
+        {"scope": "keyword.operator",
+         "settings": {"foreground": tokens["keyword"]}},
+        {"scope": "keyword.other",
+         "settings": {"foreground": tokens["keyword"]}},
+        {"scope": "storage",
+         "settings": {"foreground": tokens["keyword"]}},
+        {"scope": "storage.modifier",
+         "settings": {"foreground": tokens["keyword"], "fontStyle": "italic"}},
+        {"scope": "storage.type",
+         "settings": {"foreground": tokens["type"], "fontStyle": "italic"}},
+
         # Entities
-        {"scope": "entity.name.function", "settings": {"foreground": func_col}},
-        {"scope": "entity.name.function.member", "settings": {"foreground": func_col}},
-        {"scope": "entity.name.class", "settings": {"foreground": class_col, "fontStyle": "bold"}},
-        {"scope": "entity.name.struct", "settings": {"foreground": class_col, "fontStyle": "bold"}},
-        {"scope": "entity.name.type", "settings": {"foreground": type_col}},
-        {"scope": "entity.name.tag", "settings": {"foreground": accent}},
-        {"scope": "entity.other.attribute-name", "settings": {"foreground": param_col}},
+        {"scope": "entity.name.function",
+         "settings": {"foreground": tokens["function"]}},
+        {"scope": "entity.name.function.member",
+         "settings": {"foreground": tokens["function"]}},
+        {"scope": "entity.name.class",
+         "settings": {"foreground": tokens["class"], "fontStyle": "bold"}},
+        {"scope": "entity.name.struct",
+         "settings": {"foreground": tokens["class"], "fontStyle": "bold"}},
+        {"scope": "entity.name.type",
+         "settings": {"foreground": tokens["type"]}},
+        {"scope": "entity.name.tag",
+         "settings": {"foreground": tokens["keyword"]}},
+        {"scope": "entity.other.attribute-name",
+         "settings": {"foreground": tokens["parameter"]}},
+
         # Support
-        {"scope": "support.function", "settings": {"foreground": func_col}},
-        {"scope": "support.class", "settings": {"foreground": class_col}},
-        {"scope": "support.type", "settings": {"foreground": type_col}},
-        {"scope": "support.constant", "settings": {"foreground": type_col}},
-        {"scope": "support.variable", "settings": {"foreground": type_col}},
+        {"scope": "support.function",
+         "settings": {"foreground": tokens["function"]}},
+        {"scope": "support.class",
+         "settings": {"foreground": tokens["class"]}},
+        {"scope": "support.type",
+         "settings": {"foreground": tokens["type"]}},
+        {"scope": "support.constant",
+         "settings": {"foreground": tokens["type"]}},
+        {"scope": "support.variable",
+         "settings": {"foreground": tokens["type"]}},
+
         # Variables
         {"scope": "variable", "settings": {"foreground": fg}},
         {"scope": "variable.other.readwrite", "settings": {"foreground": fg}},
-        {"scope": "variable.parameter", "settings": {"foreground": param_col, "fontStyle": "italic"}},
-        {"scope": "variable.other.property", "settings": {"foreground": prop_col}},
+        {"scope": "variable.parameter",
+         "settings": {"foreground": tokens["parameter"], "fontStyle": "italic"}},
+        {"scope": "variable.other.property",
+         "settings": {"foreground": tokens["property"]}},
+
         # Punctuation
-        {"scope": "punctuation", "settings": {"foreground": _a(fg, "B0")}},
-        {"scope": "punctuation.definition.string", "settings": {"foreground": str_col}},
-        {"scope": "punctuation.definition.comment", "settings": {"foreground": com_col}},
-        {"scope": "punctuation.definition.tag", "settings": {"foreground": accent}},
-        {"scope": "punctuation.separator", "settings": {"foreground": _a(fg, "B0")}},
-        # Invalid — use accent (always passes 4.5 vs bg), not selection.
-        {"scope": "invalid", "settings": {"foreground": accent, "fontStyle": "bold underline"}},
-        {"scope": "invalid.deprecated", "settings": {"foreground": accent, "fontStyle": "bold underline"}},
-        {"scope": "invalid.illegal", "settings": {"foreground": accent, "fontStyle": "bold underline"}},
+        {"scope": "punctuation",
+         "settings": {"foreground": _alpha(fg, "B0")}},
+        {"scope": "punctuation.definition.string",
+         "settings": {"foreground": tokens["string"]}},
+        {"scope": "punctuation.definition.comment",
+         "settings": {"foreground": tokens["comment"]}},
+        {"scope": "punctuation.definition.tag",
+         "settings": {"foreground": tokens["keyword"]}},
+        {"scope": "punctuation.separator",
+         "settings": {"foreground": _alpha(fg, "B0")}},
+
+        # Invalid
+        {"scope": "invalid",
+         "settings": {"foreground": tokens["keyword"],
+                      "fontStyle": "bold underline"}},
+        {"scope": "invalid.deprecated",
+         "settings": {"foreground": tokens["keyword"],
+                      "fontStyle": "bold underline"}},
+        {"scope": "invalid.illegal",
+         "settings": {"foreground": tokens["keyword"],
+                      "fontStyle": "bold underline"}},
+
         # Markup
-        {"scope": "markup.heading", "settings": {"foreground": accent, "fontStyle": "bold"}},
-        {"scope": "markup.bold", "settings": {"foreground": fg, "fontStyle": "bold"}},
-        {"scope": "markup.italic", "settings": {"foreground": fg, "fontStyle": "italic"}},
-        {"scope": "markup.underline", "settings": {"foreground": fg, "fontStyle": "underline"}},
-        {"scope": "markup.inline.raw", "settings": {"foreground": num_col}},
-        {"scope": "markup.list.unnumbered", "settings": {"foreground": param_col}},
-        {"scope": "markup.list.numbered", "settings": {"foreground": param_col}},
-        {"scope": "markup.quote", "settings": {"foreground": com_col, "fontStyle": "italic"}},
-        {"scope": "markup.deleted", "settings": {"foreground": accent, "fontStyle": "strikethrough"}},
-        {"scope": "markup.inserted", "settings": {"foreground": func_col}},
-        {"scope": "markup.changed", "settings": {"foreground": type_col}},
+        {"scope": "markup.heading",
+         "settings": {"foreground": tokens["keyword"], "fontStyle": "bold"}},
+        {"scope": "markup.bold",
+         "settings": {"foreground": fg, "fontStyle": "bold"}},
+        {"scope": "markup.italic",
+         "settings": {"foreground": fg, "fontStyle": "italic"}},
+        {"scope": "markup.underline",
+         "settings": {"foreground": fg, "fontStyle": "underline"}},
+        {"scope": "markup.inline.raw",
+         "settings": {"foreground": tokens["number"]}},
+        {"scope": "markup.list.unnumbered",
+         "settings": {"foreground": tokens["parameter"]}},
+        {"scope": "markup.list.numbered",
+         "settings": {"foreground": tokens["parameter"]}},
+        {"scope": "markup.quote",
+         "settings": {"foreground": tokens["comment"], "fontStyle": "italic"}},
+        {"scope": "markup.deleted",
+         "settings": {"foreground": tokens["keyword"], "fontStyle": "strikethrough"}},
+        {"scope": "markup.inserted",
+         "settings": {"foreground": tokens["function"]}},
+        {"scope": "markup.changed",
+         "settings": {"foreground": tokens["type"]}},
+
         # Meta / diff
-        {"scope": "meta.diff", "settings": {"foreground": param_col}},
-        {"scope": "meta.diff.header", "settings": {"foreground": accent}},
-        {"scope": "meta.range", "settings": {"foreground": type_col}},
+        {"scope": "meta.diff",
+         "settings": {"foreground": tokens["parameter"]}},
+        {"scope": "meta.diff.header",
+         "settings": {"foreground": tokens["keyword"]}},
+        {"scope": "meta.range",
+         "settings": {"foreground": tokens["type"]}},
+
         # Emphasis
-        {"scope": "emphasis.strong", "settings": {"foreground": fg, "fontStyle": "bold"}},
-        {"scope": "emphasis.italic", "settings": {"foreground": fg, "fontStyle": "italic"}},
-        {"scope": "entity.name.link", "settings": {"foreground": str_col, "fontStyle": "underline"}},
+        {"scope": "emphasis.strong",
+         "settings": {"foreground": fg, "fontStyle": "bold"}},
+        {"scope": "emphasis.italic",
+         "settings": {"foreground": fg, "fontStyle": "italic"}},
+        {"scope": "entity.name.link",
+         "settings": {"foreground": tokens["string"], "fontStyle": "underline"}},
     ]
 
     display_name = f"Themixir {color_name.capitalize()}{DISPLAY_SUFFIX[variant]}"
@@ -767,17 +898,15 @@ def build_theme(color_name: str, variant: str, palette: dict) -> dict:
 def generate_all() -> list[dict]:
     raw = json.loads((ROOT / "Themixir.json").read_text())
     meta = raw.pop("_meta", None)
-    if not meta or meta.get("schema_version") != 2:
-        raise ValueError("Themixir.json missing _meta.schema_version=2")
+    if not meta or meta.get("schema_version") != 3:
+        raise ValueError("Themixir.json missing _meta.schema_version=3")
 
     palettes: dict[str, dict] = raw  # type: ignore
 
     def _build(color_variant: tuple[str, str]) -> dict:
         color_name, variant = color_variant
         base = palettes[color_name]
-        vp = base[variant]
-        full = {**base, **vp}
-        return build_theme(color_name, variant, full)
+        return build_theme(color_name, variant, base)
 
     pairs = [(c, v) for c in palettes for v in VARIANTS]
     with ThreadPoolExecutor(max_workers=8) as ex:
@@ -785,20 +914,15 @@ def generate_all() -> list[dict]:
 
 
 def write_themes(themes: list[dict]) -> list[dict]:
-    """Write themes to themes/ and return the package.json manifest entries."""
     themes_dir = ROOT / "themes"
     themes_dir.mkdir(exist_ok=True)
-    # Clear old themes first so deletions are honored
     for f in themes_dir.glob("*.json"):
         f.unlink()
 
     manifest: list[dict] = []
     for theme in themes:
-        # Recover color_name and variant from the display name
         name = theme["name"]
-        # name looks like "Themixir Red Solarized"
         stripped = name.replace("Themixir ", "")
-        # Detect variant
         for v, suffix in DISPLAY_SUFFIX.items():
             if stripped.endswith(suffix):
                 color_name = stripped[: -len(suffix)] if suffix else stripped
@@ -819,7 +943,6 @@ def write_themes(themes: list[dict]) -> list[dict]:
 
 
 def update_package_json(manifest: list[dict]) -> None:
-    """Rewrite only contributes.themes in package.json, leave the rest alone."""
     pkg_path = ROOT / "package.json"
     pkg = json.loads(pkg_path.read_text())
     pkg["contributes"]["themes"] = manifest
